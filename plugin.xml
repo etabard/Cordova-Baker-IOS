@@ -36,6 +36,9 @@
         <header-file src="src/ios/ShelfController.h"  compiler-flags="-fno-objc-arc"/>
         <source-file src="src/ios/ShelfController.m"  compiler-flags="-fno-objc-arc"/>
 
+        <header-file src="src/ios/IssueController.h"  compiler-flags="-fno-objc-arc"/>
+        <source-file src="src/ios/IssueController.m"  compiler-flags="-fno-objc-arc"/>
+
         <header-file src="src/ios/AppDelegate+notification.h"  compiler-flags="-fno-objc-arc"/>
         <source-file src="src/ios/AppDelegate+notification.m"  compiler-flags="-fno-objc-arc"/>
 
@@ -119,9 +122,9 @@
         <framework src="StoreKit.framework" />
         <framework src="UIKit.framework" />
         <framework src="Foundation.framework" />
-        <!-- <framework src="CoreGraphics.framework" /> -->
-        <!-- <framework src="QuartzCore.framework" /> -->
-        <!-- <framework src="MessageUI.framework" /> -->
+        <framework src="CoreGraphics.framework" />
+        <framework src="QuartzCore.framework" />
+        <framework src="MessageUI.framework" />
 
         <framework src="NewsstandKit.framework" />
         <framework src="StoreKit.framework" />

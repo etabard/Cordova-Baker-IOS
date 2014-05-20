@@ -7,6 +7,7 @@
 @implementation Baker
 
 @synthesize notificationMessage;
+@synthesize shelfController;
 
 - (void)setup: (CDVInvokedUrlCommand*)command
 {
@@ -29,11 +30,7 @@
                name:@"UIApplicationDidFinishLaunchingNotification" object:nil];
     
 
-    if (notificationMessage)			// if there is a pending startup notification
-			[self didReceiveRemoteNotification];	// go ahead and process it
-
-
-		[[[ShelfController alloc] init] autorelease];
+   	self.shelfController = [[[ShelfController alloc] init] autorelease];
 
     
     CDVPluginResult *pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK messageAsString:@"OK"];

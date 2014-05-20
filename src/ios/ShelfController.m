@@ -33,6 +33,7 @@
 #import "ShelfController.h"
 #import "Constants.h"
 
+#import "IssueController.h"
 #import "NSData+Base64.h"
 #import "NSString+Extensions.h"
 #import "Utils.h"
@@ -41,7 +42,6 @@
 
 @synthesize issues;
 @synthesize issueViewControllers;
-@synthesize gridView;
 @synthesize subscribeButton;
 @synthesize refreshButton;
 @synthesize shelfStatus;
@@ -108,7 +108,7 @@
 
         NSMutableArray *controllers = [NSMutableArray array];
         for (BakerIssue *issue in self.issues) {
-            IssueViewController *controller = [self createIssueViewControllerWithIssue:issue];
+            IssueController *controller = [self createIssueViewControllerWithIssue:issue];
             [controllers addObject:controller];
         }
         self.issueViewControllers = [NSMutableArray arrayWithArray:controllers];
@@ -120,7 +120,6 @@
 
 - (void)dealloc
 {
-    [gridView release];
     [issueViewControllers release];
     [issues release];
     [subscribeButton release];
@@ -140,276 +139,10 @@
     [super dealloc];
 }
 
-#pragma mark - View lifecycle
-
-- (void)viewDidLoad
-{
-    [super viewDidLoad];
-    
-
-    self.navigationItem.title = NSLocalizedString(@"SHELF_NAVIGATION_TITLE", nil);
-
-    self.background = [[[UIImageView alloc] initWithFrame:self.view.bounds] autorelease];
-    self.background.backgroundColor = [UIColor blueColor];
-    self.background.autoresizingMask = UIViewAutoresizingFlexibleWidth | UIViewAutoresizingFlexibleHeight;
-    
-    //create carousel
-	self.gridView = [[iCarousel alloc] initWithFrame:self.view.bounds];
-	self.gridView.autoresizingMask = UIViewAutoresizingFlexibleWidth | UIViewAutoresizingFlexibleHeight;
-    self.gridView.type = iCarouselTypeLinear;
-	self.gridView.delegate = self;
-	self.gridView.dataSource = self;
-    
-	
-    
-//    self.gridView = [[UICollectionView alloc] initWithFrame:CGRectZero collectionViewLayout:[[[UICollectionViewFlowLayout alloc] init] autorelease]];
-//    self.gridView.dataSource = self;
-//    self.gridView.delegate = self;
-//    self.gridView.backgroundColor = [UIColor clearColor];
-//    [self.gridView registerClass:[UICollectionViewCell class] forCellWithReuseIdentifier:@"cellIdentifier"];
-
-    [self.view addSubview:self.background];
-    [self.view addSubview:self.gridView];
-
-    [self willRotateToInterfaceOrientation:self.interfaceOrientation duration:0];
-    [self.gridView reloadData];
-
-    #ifdef BAKER_NEWSSTAND
-    self.refreshButton = [[[UIBarButtonItem alloc]
-                                       initWithBarButtonSystemItem:UIBarButtonSystemItemRefresh
-                                       target:self
-                                       action:@selector(handleRefresh:)]
-                                      autorelease];
-
-    self.subscribeButton = [[[UIBarButtonItem alloc]
-                             initWithTitle: NSLocalizedString(@"SUBSCRIBE_BUTTON_TEXT", nil)
-                             style:UIBarButtonItemStylePlain
-                             target:self
-                             action:@selector(handleSubscribeButtonPressed:)]
-                            autorelease];
-
-    self.blockingProgressView = [[UIAlertView alloc]
-                                 initWithTitle:@"Processing..."
-                                 message:@"\n"
-                                 delegate:nil
-                                 cancelButtonTitle:nil
-                                 otherButtonTitles:nil];
-    UIActivityIndicatorView *spinner = [[UIActivityIndicatorView alloc] initWithActivityIndicatorStyle:UIActivityIndicatorViewStyleWhiteLarge];
-    spinner.center = CGPointMake(139.5, 75.5); // .5 so it doesn't blur
-    [self.blockingProgressView addSubview:spinner];
-    [spinner startAnimating];
-    [spinner release];
-
-    NSMutableSet *subscriptions = [NSMutableSet setWithArray:AUTO_RENEWABLE_SUBSCRIPTION_PRODUCT_IDS];
-    if ([FREE_SUBSCRIPTION_PRODUCT_ID length] > 0 && ![purchasesManager isPurchased:FREE_SUBSCRIPTION_PRODUCT_ID]) {
-        [subscriptions addObject:FREE_SUBSCRIPTION_PRODUCT_ID];
-    }
-    [purchasesManager retrievePricesFor:subscriptions andEnableFailureNotifications:NO];
-    #endif
-}
-- (void)viewWillAppear:(BOOL)animated
-{
-    [super viewWillAppear:animated];
-    [self.navigationController.navigationBar setTranslucent:NO];
-    [self willRotateToInterfaceOrientation:self.interfaceOrientation duration:0];
-
-    for (IssueViewController *controller in self.issueViewControllers) {
-        controller.issue.transientStatus = BakerIssueTransientStatusNone;
-        [controller refresh];
-    }
-
-    #ifdef BAKER_NEWSSTAND
-    NSMutableArray *buttonItems = [NSMutableArray arrayWithObject:self.refreshButton];
-    if ([purchasesManager hasSubscriptions] || [issuesManager hasProductIDs]) {
-        [buttonItems addObject:self.subscribeButton];
-    }
-    self.navigationItem.leftBarButtonItems = buttonItems;
-    #endif
-    
-    UIBarButtonItem *infoButton = [[[UIBarButtonItem alloc]
-                                    initWithTitle: NSLocalizedString(@"INFO_BUTTON_TEXT", nil)
-                                    style:UIBarButtonItemStylePlain
-                                    target:self
-                                    action:@selector(handleInfoButtonPressed:)]
-                                   autorelease];
-
-    // Remove file info.html if you don't want the info button to be added to the shelf navigation bar
-    NSString *infoPath = [[NSBundle mainBundle] pathForResource:@"info" ofType:@"html" inDirectory:@"info"];
-    if ([[NSFileManager defaultManager] fileExistsAtPath:infoPath]) {
-        self.navigationItem.rightBarButtonItem = infoButton;
-    }
-}
-- (void)viewDidAppear:(BOOL)animated
-{
-    if (self.bookToBeProcessed) {
-        [self handleBookToBeProcessed];
-    }
-}
-- (NSUInteger)supportedInterfaceOrientations
-{
-    return UIInterfaceOrientationMaskAll;
-}
-- (BOOL)shouldAutorotateToInterfaceOrientation:(UIInterfaceOrientation)interfaceOrientation
-{
-    return [supportedOrientation indexOfObject:[NSString stringFromInterfaceOrientation:interfaceOrientation]] != NSNotFound;
-}
-- (BOOL)shouldAutorotate
-{
-    return YES;
-}
-//- (void)willRotateToInterfaceOrientation:(UIInterfaceOrientation)toInterfaceOrientation duration:(NSTimeInterval)duration
-//{
-//    int width  = 0;
-//    int height = 0;
-//
-//    NSString *image = @"";
-//    CGSize size = [UIScreen mainScreen].bounds.size;
-//    int landscapePadding = 0;
-//
-//    if (UIInterfaceOrientationIsPortrait(toInterfaceOrientation)) {
-//        width  = size.width;
-//        height = size.height - 64;
-//        image  = @"shelf-bg-portrait";
-//    } else if (UIInterfaceOrientationIsLandscape(toInterfaceOrientation)) {
-//        width  = size.height;
-//        height = size.width - 64;
-//        if (UI_USER_INTERFACE_IDIOM() == UIUserInterfaceIdiomPhone) {
-//            height = height + 12;
-//        }
-//        image  = @"shelf-bg-landscape";
-//        CGFloat cellWidth = [IssueViewController getIssueCellSize].width;
-//        landscapePadding = width / 4 - cellWidth / 2;
-//    }
-//
-//    if (size.height == 568) {
-//        image = [NSString stringWithFormat:@"%@-568h", image];
-//    } else {
-//        image = [NSString stringWithFormat:@"%@", image];
-//    }
-//
-//    int bannerHeight = [ShelfViewController getBannerHeight];
-//
-//    self.background.frame = CGRectMake(0, 0, width, height);
-//    self.background.image = [UIImage imageNamed:image];
-//
-//    self.gridView.frame = CGRectMake(landscapePadding, bannerHeight, width - 2 * landscapePadding, height - bannerHeight);
-//}
-- (IssueViewController *)createIssueViewControllerWithIssue:(BakerIssue *)issue
-{
-    IssueViewController *controller = [[[IssueViewController alloc] initWithBakerIssue:issue] autorelease];
-    [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(handleReadIssue:) name:@"read_issue_request" object:controller];
-    return controller;
-}
-
-#pragma mark - Shelf data source
-
-- (NSInteger)numberOfSectionsInCollectionView:(UICollectionView *)collectionView {
-    return 1;
-}
-
-- (NSUInteger)numberOfItemsInCarousel:(iCarousel *)carousel {
-    return [issueViewControllers count];
-}
-
-
-- (CGSize)collectionView:(UICollectionView *)collectionView layout:(UICollectionViewLayout*)collectionViewLayout sizeForItemAtIndexPath:(NSIndexPath *)indexPath {
-    return [IssueViewController getIssueCellSize];
-}
-
-- (UIView *)carousel:(iCarousel *)carousel viewForItemAtIndex:(NSUInteger)indexPath reusingView:(UIView *)view
-{
-//    CGSize cellSize = [IssueViewController getIssueCellSize];
-//    CGRect cellFrame = CGRectMake(0, 0, cellSize.width, cellSize.height);
-//    
-//    UICollectionViewCell* cell = [[[UICollectionViewCell alloc] initWithFrame:cellFrame] autorelease];
-//        
-//    cell.contentView.backgroundColor = [UIColor clearColor];
-//    cell.backgroundColor = [UIColor clearColor];
-//	
-//    
-//    IssueViewController *controller = [self.issueViewControllers objectAtIndex:indexPath];
-//    UIView *removableIssueView = [cell.contentView viewWithTag:42];
-//    if (removableIssueView) {
-//        [removableIssueView removeFromSuperview];
-//    }
-//    [cell.contentView addSubview:controller.view];
-//    
-//    return cell;
-    UILabel *label = nil;
-    
-    //create new view if no view is available for recycling
-    if (view == nil)
-    {
-        view = [[UIImageView alloc] initWithFrame:CGRectMake(0, 0, 200.0f, 400.0f)];
-        //((UIImageView *)view).image = [UIImage imageNamed:@"page.png"];
-        view.backgroundColor = [UIColor grayColor];
-        view.contentMode = UIViewContentModeCenter;
-        label = [[UILabel alloc] initWithFrame:view.bounds];
-        label.backgroundColor = [UIColor clearColor];
-        label.textAlignment = UITextAlignmentCenter;
-        label.font = [label.font fontWithSize:50];
-        label.tag = 1;
-        [view addSubview:label];
-    }
-    else
-    {
-        //get a reference to the label in the recycled view
-        label = (UILabel *)[view viewWithTag:1];
-    }
-    
-    //set item label
-    //remember to always set any properties of your carousel item
-    //views outside of the `if (view == nil) {...}` check otherwise
-    //you'll get weird issues with carousel item content appearing
-    //in the wrong place in the carousel
-    label.text = [NSString stringWithFormat:@"%lu",(unsigned long)indexPath];
-    
-    return view;
-
-}
-
-//- (CATransform3D)carousel:(iCarousel *)carousel itemTransformForOffset:(CGFloat)offset baseTransform:(CATransform3D)transform
-//{
-//    //implement 'flip3D' style carousel
-//    transform = CATransform3DRotate(transform, M_PI / 8.0f, 0.0f, 1.0f, 0.0f);
-//    return CATransform3DTranslate(transform, 0.0f, 0.0f, offset * carousel.itemWidth);
-//}
-
-- (CGFloat)carousel:(iCarousel *)carousel valueForOption:(iCarouselOption)option withDefault:(CGFloat)value
-{
-    //customize carousel display
-    switch (option)
-    {
-        case iCarouselOptionWrap:
-        {
-            //normally you would hard-code this to YES or NO
-            return NO;
-        }
-        case iCarouselOptionSpacing:
-        {
-            //add a bit of spacing between the item views
-            return value * 1.15f;
-        }
-        case iCarouselOptionFadeMax:
-        {
-            if (carousel.type == iCarouselTypeCustom)
-            {
-                //set opacity based on distance from camera
-                return 0.0f;
-            }
-            return value;
-        }
-        default:
-        {
-            return value;
-        }
-    }
-}
 
 
 #ifdef BAKER_NEWSSTAND
 - (void)handleRefresh:(NSNotification *)notification {
-    [self setrefreshButtonEnabled:NO];
 
     [issuesManager refresh:^(BOOL status) {
         if(status) {
@@ -420,56 +153,48 @@
                 issue.price = [shelfStatus priceFor:issue.productID];
             }
 
+          
+            
             void (^updateIssues)() = ^{
                 // Step 1: remove controllers for issues that no longer exist
                 __block NSMutableArray *discardedControllers = [NSMutableArray array];
                 [self.issueViewControllers enumerateObjectsUsingBlock:^(id obj, NSUInteger idx, BOOL *stop) {
-                    IssueViewController *ivc = (IssueViewController *)obj;
-
+                    IssueController *ivc = (IssueController *)obj;
+                    
                     if (![self bakerIssueWithID:ivc.issue.ID]) {
                         [discardedControllers addObject:ivc];
-                        [self.gridView removeItemAtIndex:idx animated:true];
-                        //[self.gridView deleteItemsAtIndexPaths:[NSArray arrayWithObject:[NSIndexPath indexPathForItem:idx inSection:0]]];
                     }
                 }];
                 [self.issueViewControllers removeObjectsInArray:discardedControllers];
-
+                
                 // Step 2: add controllers for issues that did not yet exist (and refresh the ones that do exist)
                 [self.issues enumerateObjectsUsingBlock:^(id obj, NSUInteger idx, BOOL *stop) {
                     // NOTE: this block changes the issueViewController array while looping
                     BakerIssue *issue = (BakerIssue *)obj;
-
-                    IssueViewController *existingIvc = [self issueViewControllerWithID:issue.ID];
-
+                    
+                    IssueController *existingIvc = [self issueViewControllerWithID:issue.ID];
+                    
                     if (existingIvc) {
                         existingIvc.issue = issue;
                     } else {
-                        IssueViewController *newIvc = [self createIssueViewControllerWithIssue:issue];
+                        IssueController *newIvc = [self createIssueViewControllerWithIssue:issue];
                         [self.issueViewControllers insertObject:newIvc atIndex:idx];
-                        [self.gridView insertItemAtIndex:idx animated: true];
-                        //[self.gridView insertItemsAtIndexPaths:[NSArray arrayWithObject:[NSIndexPath indexPathForItem:idx inSection:0] ] ];
                     }
                 }];
-
-                [self.gridView reloadData];
+                
             };
-
-            // When first launched, the grid is not initialised, so we can't
-            // call in the "batch update" method of the grid view
-            if (self.gridView) {
-                updateIssues();
-                //[self.gridView performBatchUpdates:updateIssues completion:nil];
-            }
-            else {
-                updateIssues();
-            }
-
+            
+            
+            updateIssues();
+           
+            
             [purchasesManager retrievePurchasesFor:[issuesManager productIDs] withCallback:^(NSDictionary *purchases) {
                 // List of purchases has been returned, so we can refresh all issues
                 [self.issueViewControllers enumerateObjectsUsingBlock:^(id obj, NSUInteger idx, BOOL *stop) {
-                    [(IssueViewController *)obj refreshContentWithCache:NO];
+                    //refresh drawing
+                    NSLog(@"Retrieve purchase from app store %@", [(IssueController*)obj issue].productID);
+                    //[(IssueController *)obj refreshContentWithCache:NO];
                 }];
-                [self setrefreshButtonEnabled:YES];
             }];
 
             [purchasesManager retrievePricesFor:issuesManager.productIDs andEnableFailureNotifications:NO];
@@ -477,15 +202,14 @@
             [Utils showAlertWithTitle:NSLocalizedString(@"INTERNET_CONNECTION_UNAVAILABLE_TITLE", nil)
                               message:NSLocalizedString(@"INTERNET_CONNECTION_UNAVAILABLE_MESSAGE", nil)
                           buttonTitle:NSLocalizedString(@"INTERNET_CONNECTION_UNAVAILABLE_CLOSE", nil)];
-            [self setrefreshButtonEnabled:YES];
         }
     }];
 }
 
-- (IssueViewController *)issueViewControllerWithID:(NSString *)ID {
-    __block IssueViewController* foundController = nil;
+- (IssueController *)issueViewControllerWithID:(NSString *)ID {
+    __block IssueController* foundController = nil;
     [self.issueViewControllers enumerateObjectsUsingBlock:^(id obj, NSUInteger idx, BOOL *stop) {
-        IssueViewController *ivc = (IssueViewController *)obj;
+        IssueController *ivc = (IssueController *)obj;
         if ([ivc.issue.ID isEqualToString:ID]) {
             foundController = ivc;
             *stop = YES;
@@ -504,6 +228,13 @@
         }
     }];
     return foundIssue;
+}
+
+- (IssueController *)createIssueViewControllerWithIssue:(BakerIssue *)issue
+{
+    IssueController *controller = [[[IssueController alloc] initWithBakerIssue:issue] autorelease];
+    [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(handleReadIssue:) name:@"read_issue_request" object:controller];
+    return controller;
 }
 
 #pragma mark - Store Kit
@@ -694,7 +425,7 @@
 
     if (issuesRetrieved) {
         NSString *price;
-        for (IssueViewController *controller in self.issueViewControllers) {
+        for (IssueController *controller in self.issueViewControllers) {
             price = [purchasesManager priceFor:controller.issue.productID];
             if (price) {
                 [controller setPrice:price];
@@ -730,12 +461,12 @@
     if ([status isEqual:@"opening"]) {
         book = [[[BakerBook alloc] initWithBookPath:issue.path bundled:NO] autorelease];
         if (book) {
-            [self pushViewControllerWithBook:book];
+            //[self pushViewControllerWithBook:book];
         } else {
             NSLog(@"[ERROR] Book %@ could not be initialized", issue.ID);
             issue.transientStatus = BakerIssueTransientStatusNone;
             // Let's refresh everything as it's easier. This is an edge case anyway ;)
-            for (IssueViewController *controller in issueViewControllers) {
+            for (IssueController *controller in issueViewControllers) {
                 [controller refresh];
             }
             [Utils showAlertWithTitle:NSLocalizedString(@"ISSUE_OPENING_FAILED_TITLE", nil)
@@ -746,100 +477,30 @@
     #else
     if ([status isEqual:@"bundled"]) {
         book = [issue bakerBook];
-        [self pushViewControllerWithBook:book];
+        //[self pushViewControllerWithBook:book];
     }
     #endif
 }
 - (void)handleReadIssue:(NSNotification *)notification
 {
-    IssueViewController *controller = notification.object;
+    IssueController *controller = notification.object;
     [self readIssue:controller.issue];
 }
 - (void)receiveBookProtocolNotification:(NSNotification *)notification
 {
     self.bookToBeProcessed = [notification.userInfo objectForKey:@"ID"];
-    [self.navigationController popToRootViewControllerAnimated:YES];
+    // [self.navigationController popToRootViewControllerAnimated:YES];
 }
 - (void)handleBookToBeProcessed
 {
-    for (IssueViewController *issueViewController in self.issueViewControllers) {
-        if ([issueViewController.issue.ID isEqualToString:self.bookToBeProcessed]) {
-            [issueViewController actionButtonPressed:nil];
+    for (IssueController *issueController in self.issueViewControllers) {
+        if ([issueController.issue.ID isEqualToString:self.bookToBeProcessed]) {
+            [IssueController actionButtonPressed:nil];
             break;
         }
     }
 
     self.bookToBeProcessed = nil;
-}
-- (void)pushViewControllerWithBook:(BakerBook *)book
-{
-    BakerViewController *bakerViewController = [[BakerViewController alloc] initWithBook:book];
-    [self.navigationController pushViewController:bakerViewController animated:YES];
-    [bakerViewController release];
-}
-
-#pragma mark - Buttons management
-
--(void)setrefreshButtonEnabled:(BOOL)enabled {
-    self.refreshButton.enabled = enabled;
-}
-
--(void)setSubscribeButtonEnabled:(BOOL)enabled {
-    self.subscribeButton.enabled = enabled;
-    if (enabled) {
-        self.subscribeButton.title = NSLocalizedString(@"SUBSCRIBE_BUTTON_TEXT", nil);
-    } else {
-        self.subscribeButton.title = NSLocalizedString(@"SUBSCRIBE_BUTTON_DISABLED_TEXT", nil);
-    }
-}
-
-- (void)webViewDidFinishLoad:(UIWebView *)webView {
-    // Inject user_id
-    [Utils webView:webView dispatchHTMLEvent:@"init" withParams:[NSDictionary dictionaryWithObjectsAndKeys:
-                                                                [BakerAPI UUID], @"user_id",
-                                                                [Utils appID], @"app_id",
-                                                                nil]];
-}
-
-- (void)handleInfoButtonPressed:(id)sender {
-    
-    // If the button is pressed when the info box is open, close it
-    if (UI_USER_INTERFACE_IDIOM() == UIUserInterfaceIdiomPad)
-    {
-        if ([infoPopover isPopoverVisible])
-        {
-            [infoPopover dismissPopoverAnimated:YES];
-            return;
-        }
-    }
-    
-    // Prepare new view
-    UIViewController *popoverContent = [[UIViewController alloc] init];
-    UIWebView *popoverView = [[UIWebView alloc] init];
-    popoverView.backgroundColor = [UIColor blackColor];
-    popoverView.delegate = self;
-    popoverContent.view = popoverView;
-    
-    // Load HTML file
-    NSString *path = [[NSBundle mainBundle] pathForResource:@"info" ofType:@"html" inDirectory:@"info"];
-    [popoverView loadRequest:[NSURLRequest requestWithURL:[NSURL fileURLWithPath:path]]];
-    
-    // Open view
-    if (UI_USER_INTERFACE_IDIOM() == UIUserInterfaceIdiomPad)
-    {
-        // On iPad use the UIPopoverController
-        infoPopover = [[UIPopoverController alloc] initWithContentViewController:popoverContent];
-        [infoPopover presentPopoverFromBarButtonItem:sender
-                            permittedArrowDirections:UIPopoverArrowDirectionUp
-                                            animated:YES];
-    }
-    else {
-        // On iPhone push the view controller to the navigation
-        [self.navigationController pushViewController:popoverContent animated:YES];
-    }
-    
-    [popoverView release];
-    [popoverContent release];
 }
 
 #pragma mark - Helper methods
@@ -853,13 +514,5 @@
     #endif
 }
 
-+ (int)getBannerHeight
-{
-    if (UI_USER_INTERFACE_IDIOM() == UIUserInterfaceIdiomPad) {
-        return 240;
-    } else {
-        return 104;
-    }
-}
 
 @end

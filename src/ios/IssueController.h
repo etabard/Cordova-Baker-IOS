@@ -1,5 +1,5 @@
 //
-//  ShelfViewController.h
+//  IssueViewController.h
 //  Baker
 //
 //  ==========================================================================================
@@ -31,60 +31,69 @@
 //
 
 #import <UIKit/UIKit.h>
-#import <StoreKit/StoreKit.h>
-
 #import "BakerIssue.h"
-#import "IssuesManager.h"
-#import "ShelfStatus.h"
-#import "BakerAPI.h"
 #ifdef BAKER_NEWSSTAND
 #import "PurchasesManager.h"
 #endif
 
-@interface ShelfController : NSObject {
-    BakerAPI *api;
-    IssuesManager *issuesManager;
-    NSMutableArray *notRecognisedTransactions;
-    __weak UIPopoverController *infoPopover;
-
+@interface IssueController : NSObject {
+    NSString *currentAction;
+    BOOL purchaseDelayed;
     #ifdef BAKER_NEWSSTAND
     PurchasesManager *purchasesManager;
     #endif
 }
 
-@property (copy, nonatomic) NSArray *issues;
-@property (copy, nonatomic) NSArray *supportedOrientation;
+@property (strong, nonatomic) BakerIssue *issue;
+@property (strong, nonatomic) UIButton *actionButton;
+@property (strong, nonatomic) UIButton *archiveButton;
+@property (strong, nonatomic) UIProgressView *progressBar;
+@property (strong, nonatomic) UIActivityIndicatorView *spinner;
+@property (strong, nonatomic) UILabel *loadingLabel;
+@property (strong, nonatomic) UILabel *priceLabel;
 
-@property (retain, nonatomic) NSMutableArray *issueViewControllers;
-@property (retain, nonatomic) ShelfStatus *shelfStatus;
+@property (strong, nonatomic) UIButton *issueCover;
+@property (strong, nonatomic) UILabel *titleLabel;
+@property (strong, nonatomic) UILabel *infoLabel;
 
-@property (strong, nonatomic) UIImageView *background;
-@property (strong, nonatomic) UIBarButtonItem *refreshButton;
-@property (strong, nonatomic) UIBarButtonItem *subscribeButton;
+@property (copy, nonatomic) NSString *currentStatus;
 
-@property (strong, nonatomic) UIActionSheet *subscriptionsActionSheet;
-@property (strong, nonatomic) NSArray *subscriptionsActionSheetActions;
-@property (strong, nonatomic) UIAlertView *blockingProgressView;
-
-@property (copy, nonatomic) NSString *bookToBeProcessed;
+#pragma mark - Structs
+typedef struct {
+    int cellPadding;
+    int thumbWidth;
+    int thumbHeight;
+    int contentOffset;
+} UI;
 
 #pragma mark - Init
-- (id)init;
-- (id)initWithBooks:(NSArray *)currentBooks;
+- (id)initWithBakerIssue:(BakerIssue *)bakerIssue;
 
-#pragma mark - Shelf data source
+#pragma mark - View Lifecycle
+- (void)refresh;
+- (void)refresh:(NSString *)status;
+- (void)refreshContentWithCache:(bool)cache;
+- (void)preferredContentSizeChanged:(NSNotification *)notification;
+
+#pragma mark - Issue management
+- (void)actionButtonPressed:(UIButton *)sender;
 #ifdef BAKER_NEWSSTAND
-- (void)handleRefresh:(NSNotification *)notification;
+- (void)download;
+- (void)setPrice:(NSString *)price;
+- (void)buy;
+#endif
+- (void)read;
 
-#pragma mark - Store Kit
-- (void)handleSubscription:(NSNotification *)notification;
+#pragma mark - Newsstand archive management
+#ifdef BAKER_NEWSSTAND
+- (void)archiveButtonPressed:(UIButton *)sender;
 #endif
 
-#pragma mark - Navigation management
-- (void)readIssue:(BakerIssue *)issue;
-- (void)handleReadIssue:(NSNotification *)notification;
-- (void)receiveBookProtocolNotification:(NSNotification *)notification;
-- (void)handleBookToBeProcessed;
-
-
 @end
+
+#ifdef BAKER_NEWSSTAND
+@interface alertView: UIAlertView <UIActionSheetDelegate> {
+
+}
+@end
+#endif
