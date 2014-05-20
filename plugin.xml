@@ -30,11 +30,100 @@
             </feature>
         </config-file>
 
-        <header-file src="src/ios/Baker.h" />
-        <source-file src="src/ios/Baker.m" />
+        <header-file src="src/ios/Baker.h"  compiler-flags="-fno-objc-arc"/>
+        <source-file src="src/ios/Baker.m"  compiler-flags="-fno-objc-arc"/>
+
+        <header-file src="src/ios/AppDelegate+notification.h"  compiler-flags="-fno-objc-arc"/>
+        <source-file src="src/ios/AppDelegate+notification.m"  compiler-flags="-fno-objc-arc"/>
+
+        <header-file src="src/ios/BakerShelf/Constants.h" compiler-flags="-fno-objc-arc" />
+
+        <header-file src="src/ios/BakerShelf/lib/NSData+Base64.h" compiler-flags="-fno-objc-arc" />
+        <source-file src="src/ios/BakerShelf/lib/NSData+Base64.m" compiler-flags="-fno-objc-arc"/>
+
+        <header-file src="src/ios/BakerShelf/lib/NSString+Extensions.h" compiler-flags="-fno-objc-arc"/>
+        <source-file src="src/ios/BakerShelf/lib/NSString+Extensions.m" compiler-flags="-fno-objc-arc"/>
+
+        <header-file src="src/ios/BakerShelf/lib/UIColor+Extensions.h" compiler-flags="-fno-objc-arc"/>
+        <source-file src="src/ios/BakerShelf/lib/UIColor+Extensions.m" compiler-flags="-fno-objc-arc"/>
+
+        <header-file src="src/ios/BakerShelf/lib/NSMutableURLRequest+WebServiceClient.h" compiler-flags="-fno-objc-arc"/>
+        <source-file src="src/ios/BakerShelf/lib/NSMutableURLRequest+WebServiceClient.m" compiler-flags="-fno-objc-arc"/>
+
+        <header-file src="src/ios/BakerShelf/lib/NSString+UUID.h" compiler-flags="-fno-objc-arc"/>
+        <source-file src="src/ios/BakerShelf/lib/NSString+UUID.m" compiler-flags="-fno-objc-arc"/>
+
+        <header-file src="src/ios/BakerShelf/lib/NSURL+Extensions.h" compiler-flags="-fno-objc-arc"/>
+        <source-file src="src/ios/BakerShelf/lib/NSURL+Extensions.m" compiler-flags="-fno-objc-arc"/>
+
+        <header-file src="src/ios/BakerShelf/lib/Reachability.h" compiler-flags="-fno-objc-arc"/>
+        <source-file src="src/ios/BakerShelf/lib/Reachability.m" compiler-flags="-fno-objc-arc"/>
+
+        <header-file src="src/ios/BakerShelf/IssuesManager.h" compiler-flags="-fno-objc-arc"/>
+        <source-file src="src/ios/BakerShelf/IssuesManager.m" compiler-flags="-fno-objc-arc"/>
+
+        <header-file src="src/ios/BakerShelf/PurchasesManager.h" compiler-flags="-fno-objc-arc"/>
+        <source-file src="src/ios/BakerShelf/PurchasesManager.m" compiler-flags="-fno-objc-arc"/>
+
+        <header-file src="src/ios/BakerShelf/ShelfStatus.h" compiler-flags="-fno-objc-arc"/>
+        <source-file src="src/ios/BakerShelf/ShelfStatus.m" compiler-flags="-fno-objc-arc"/>
+
+        <header-file src="src/ios/BakerShelf/BakerIssue.h" compiler-flags="-fno-objc-arc"/>
+        <source-file src="src/ios/BakerShelf/BakerIssue.m" compiler-flags="-fno-objc-arc"/>
+
+        <header-file src="src/ios/BakerShelf/BakerAPI.h" compiler-flags="-fno-objc-arc"/>
+        <source-file src="src/ios/BakerShelf/BakerAPI.m" compiler-flags="-fno-objc-arc"/>
+
+
+
+        <header-file src="src/ios/BakerView/lib/JSONStatus.h" compiler-flags="-fno-objc-arc"/>
+        <source-file src="src/ios/BakerView/lib/JSONStatus.m" compiler-flags="-fno-objc-arc"/>
+        
+        <header-file src="src/ios/BakerView/lib/SSZipArchive.h" compiler-flags="-fno-objc-arc"/>
+        <source-file src="src/ios/BakerView/lib/SSZipArchive.m" compiler-flags="-fno-objc-arc"/>
+        
+        <header-file src="src/ios/BakerView/lib/GTMNSString+HTML.h" compiler-flags="-fno-objc-arc"/>
+        <source-file src="src/ios/BakerView/lib/GTMNSString+HTML.m" compiler-flags="-fno-objc-arc"/>
+
+        <header-file src="src/ios/BakerView/lib/GTMDefines.h" compiler-flags="-fno-objc-arc"/>
+
+        <header-file src="src/ios/BakerView/lib/Utils.h" compiler-flags="-fno-objc-arc"/>
+        <source-file src="src/ios/BakerView/lib/Utils.m" compiler-flags="-fno-objc-arc"/>
+
+        <header-file src="src/ios/BakerView/BakerBook.h" compiler-flags="-fno-objc-arc"/>
+        <source-file src="src/ios/BakerView/BakerBook.m" compiler-flags="-fno-objc-arc"/>
+
+
+        <header-file src="src/ios/BakerView/lib/minizip/zip.h" target-dir="minizip/" compiler-flags="-fno-objc-arc"/>
+        <source-file src="src/ios/BakerView/lib/minizip/zip.c" target-dir="minizip/" compiler-flags="-fno-objc-arc"/>
+
+        <header-file src="src/ios/BakerView/lib/minizip/unzip.h" target-dir="minizip/" compiler-flags="-fno-objc-arc"/>
+        <source-file src="src/ios/BakerView/lib/minizip/unzip.c" target-dir="minizip/" compiler-flags="-fno-objc-arc"/>
+
+        <header-file src="src/ios/BakerView/lib/minizip/mztools.h" target-dir="minizip/" compiler-flags="-fno-objc-arc"/>
+        <source-file src="src/ios/BakerView/lib/minizip/mztools.c" target-dir="minizip/" compiler-flags="-fno-objc-arc"/>
+
+        <header-file src="src/ios/BakerView/lib/minizip/ioapi.h" target-dir="minizip/" compiler-flags="-fno-objc-arc"/>
+        <source-file src="src/ios/BakerView/lib/minizip/ioapi.c" target-dir="minizip/" compiler-flags="-fno-objc-arc"/>
+
+        <header-file src="src/ios/BakerView/lib/minizip/crypt.h" target-dir="minizip/" compiler-flags="-fno-objc-arc"/>
+
+
+        
+
+        <framework src="SystemConfiguration.framework" />
+        <framework src="AVFoundation.framework" />
+        <framework src="StoreKit.framework" />
+        <framework src="UIKit.framework" />
+        <framework src="Foundation.framework" />
+        <!-- <framework src="CoreGraphics.framework" /> -->
+        <!-- <framework src="QuartzCore.framework" /> -->
+        <!-- <framework src="MessageUI.framework" /> -->
 
         <framework src="NewsstandKit.framework" />
         <framework src="StoreKit.framework" />
+        <framework src="libz.dylib" />
+
 
         <!-- Info.plist -->
         <config-file target="*-Info.plist" parent="UINewsstandApp">
