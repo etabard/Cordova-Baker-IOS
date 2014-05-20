@@ -1,0 +1,83 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<plugin
+    xmlns="http://apache.org/cordova/ns/plugins/1.0"
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    id="com.lesfrancschatons.phonegap.plugins.baker"
+    version="0.0.1">
+
+    <name>Baker</name>
+	<description>Baker integration for phonegap</description>
+    <engines>
+        <engine name="cordova" version=">=2.4.0" />
+    </engines>
+	
+	<license>MIT</license>
+    <keywords>cordova,phonegap,newsstand,news,stand,kit,newsstandkit,ios,baker</keywords>
+    <!-- ios -->
+    <platform name="ios">
+        <js-module src="Baker.js" name="Baker">
+            <clobbers target="newsstand" />
+            <clobbers target="storekit" />
+        </js-module>
+        
+        <!-- Cordova 2.2 -->
+        <plugins-plist key="Baker" string="Baker" />
+                    
+        <!-- Cordova 2.5+ -->
+        <config-file target="config.xml" parent="/*">
+            <feature name="Baker">
+                <param name="ios-package" value="Baker"/>
+            </feature>
+        </config-file>
+
+        <header-file src="src/ios/Baker.h" />
+        <source-file src="src/ios/Baker.m" />
+
+        <framework src="NewsstandKit.framework" />
+        <framework src="StoreKit.framework" />
+
+        <!-- Info.plist -->
+        <config-file target="*-Info.plist" parent="UINewsstandApp">
+            <true/>
+        </config-file>
+
+        <config-file target="*-Info.plist" parent="UIBackgroundModes">
+            <array>
+                <string>newsstand-content</string>
+            </array>
+        </config-file>
+
+        <config-file target="*-Info.plist" parent="CFBundleIcons">
+            <dict>
+                <key>CFBundlePrimaryIcon</key>
+                <dict>
+                    <key>CFBundleIconFiles</key>
+                    <array>
+                        <string>icon-small</string>
+                        <string>icon-40</string>
+                        <string>icon-50</string>
+                        <string>icon-76</string>
+                        <string>icon-60</string>
+                        <string>icon</string>
+                        <string>icon@2x</string>
+                        <string>icon-72</string>
+                        <string>icon-72@2x</string>
+                    </array>
+                    <key>UIPrerenderedIcon</key>
+                    <true/>
+                    <key>UINewsstandIcon</key>
+                    <dict>
+                        <key>CFBundleIconFiles</key>
+                        <array>
+                            <string>icon-newsstand</string>
+                        </array>
+                        <key>UINewsstandBindingEdge</key>
+                        <string>UINewsstandBindingEdgeLeft</string>
+                        <key>UINewsstandBindingType</key>
+                        <string>UINewsstandBindingTypeMagazine</string>
+                    </dict>
+                </dict>
+            </dict>
+        </config-file>
+    </platform>
+</plugin>
