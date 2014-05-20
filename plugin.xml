@@ -135,6 +135,10 @@
             <true/>
         </config-file>
 
+        <config-file target="*-Info.plist" parent="UIStatusBarHidden">
+            <true/>
+        </config-file>
+
         <config-file target="*-Info.plist" parent="UIBackgroundModes">
             <array>
                 <string>newsstand-content</string>
