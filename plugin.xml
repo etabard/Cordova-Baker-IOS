@@ -16,8 +16,7 @@
     <!-- ios -->
     <platform name="ios">
         <js-module src="Baker.js" name="Baker">
-            <clobbers target="newsstand" />
-            <clobbers target="storekit" />
+            <clobbers target="Baker" />
         </js-module>
         
         <!-- Cordova 2.2 -->

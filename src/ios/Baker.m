@@ -37,6 +37,22 @@
     [self.commandDelegate sendPluginResult:pluginResult callbackId:command.callbackId];
 }
 
+
+- (void)restore: (CDVInvokedUrlCommand*)command
+{
+    [[PurchasesManager sharedInstance] restore];
+    CDVPluginResult *pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK messageAsString:@"OK"];
+    [self.commandDelegate sendPluginResult:pluginResult callbackId:command.callbackId];
+}
+
+- (void)refresh: (CDVInvokedUrlCommand*)command
+{
+    [self.shelfController handleRefresh:nil];
+    CDVPluginResult *pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK messageAsString:@"OK"];
+    [self.commandDelegate sendPluginResult:pluginResult callbackId:command.callbackId];
+}
+
+
 - (void)applicationWillHandleNewsstandNotificationOfContent:(NSString *)contentName
 {
 	NSLog(@"will handle newsstand notifications");

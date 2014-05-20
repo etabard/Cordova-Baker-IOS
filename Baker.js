@@ -27,10 +27,11 @@ var protectCall = function (callback, context) {
 };
 
 Baker.prototype.init = function (options) {
+    options = options || {}
     if (options.debug) {
         // exec('debug', [], noop, noop);
         log = function (msg) {
-            console.log("Newsstand[js]: " + msg);
+            console.log("Baker[js]: " + msg);
         };
     }
     var that = this;
@@ -45,6 +46,29 @@ Baker.prototype.init = function (options) {
     exec('setup', [], setupOk, setupFailed);
 };
 
+Baker.prototype.restore = function() {
+    var setupOk = function () {
+        console.log('restore ok');
+        protectCall(options.success, 'init::success');
+    };
+    var setupFailed = function () {
+        console.log('restore failed');
+        protectCall(options.error, 'init::error');
+    };
+    exec('restore', [], setupOk, setupFailed);
+}
+
+Baker.prototype.refresh = function() {
+    var setupOk = function () {
+        console.log('restore ok');
+        protectCall(options.success, 'init::success');
+    };
+    var setupFailed = function () {
+        console.log('restore failed');
+        protectCall(options.error, 'init::error');
+    };
+    exec('refresh', [], setupOk, setupFailed);
+}
 
 
 module.exports = new Baker();
