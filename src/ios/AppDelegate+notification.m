@@ -39,6 +39,9 @@ static char launchNotificationKey;
 	if (notification)
 	{
 		NSDictionary *launchOptions = [notification userInfo];
+		Baker *pushHandler = [self getCommandInstance:@"Baker"];
+    [pushHandler createNotificationChecker:notification];
+    
 		if (launchOptions)
 			self.launchNotification = [launchOptions objectForKey: @"UIApplicationLaunchOptionsRemoteNotificationKey"];
 	}
@@ -56,6 +59,25 @@ static char launchNotificationKey;
 
 - (void)application:(UIApplication *)application didReceiveRemoteNotification:(NSDictionary *)userInfo {
     NSLog(@"didReceiveNotification");
+    
+    // Get application state for iOS4.x+ devices, otherwise assume active
+    UIApplicationState appState = UIApplicationStateActive;
+    if ([application respondsToSelector:@selector(applicationState)]) {
+        appState = application.applicationState;
+    }
+    
+    if (appState == UIApplicationStateActive) {
+        Baker *pushHandler = [self getCommandInstance:@"Baker"];
+        pushHandler.notificationMessage = userInfo;
+        [pushHandler didReceiveRemoteNotification];
+    } else {
+        //save it for later
+        self.launchNotification = userInfo;
+    }
+}
+
+- (void)application:(UIApplication *)application didReceiveRemoteNotification:(NSDictionary *)userInfo  fetchCompletionHandler:(void (^)(UIBackgroundFetchResult result))handler{
+    NSLog(@"didReceiveNotification background");
     
     // Get application state for iOS4.x+ devices, otherwise assume active
     UIApplicationState appState = UIApplicationStateActive;

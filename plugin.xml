@@ -33,6 +33,9 @@
         <header-file src="src/ios/Baker.h"  compiler-flags="-fno-objc-arc"/>
         <source-file src="src/ios/Baker.m"  compiler-flags="-fno-objc-arc"/>
 
+        <header-file src="src/ios/ShelfController.h"  compiler-flags="-fno-objc-arc"/>
+        <source-file src="src/ios/ShelfController.m"  compiler-flags="-fno-objc-arc"/>
+
         <header-file src="src/ios/AppDelegate+notification.h"  compiler-flags="-fno-objc-arc"/>
         <source-file src="src/ios/AppDelegate+notification.m"  compiler-flags="-fno-objc-arc"/>
 
@@ -133,6 +136,7 @@
         <config-file target="*-Info.plist" parent="UIBackgroundModes">
             <array>
                 <string>newsstand-content</string>
+                <string>remote-notification</string>
             </array>
         </config-file>
 

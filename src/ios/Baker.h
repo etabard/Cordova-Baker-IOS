@@ -16,6 +16,6 @@
 - (void)applicationDidBecomeActive:(UIApplication *)application;
 - (void)applicationDidEnterBackground:(UIApplication *)application;
 - (void)applicationWillResignActive:(UIApplication *)application;
-
+- (void)createNotificationChecker:(NSNotification *)notification;
 
 @end

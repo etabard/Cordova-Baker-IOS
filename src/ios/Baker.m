@@ -2,6 +2,7 @@
 #import "Constants.h"
 #import "BakerAPI.h"
 #import "IssuesManager.h"
+#import "ShelfController.h"
 
 @implementation Baker
 
@@ -11,7 +12,7 @@
 {
 	#ifdef BAKER_NEWSSTAND
 
-    NSLog(@"====== Baker Newsstand Mode enabled wouhou haha ======");
+    NSLog(@"====== Baker Newsstand Mode enabled  ======");
     [BakerAPI generateUUIDOnce];
     // Let the device know we want to handle Newsstand push notifications
     [[UIApplication sharedApplication] registerForRemoteNotificationTypes:(UIRemoteNotificationTypeNewsstandContentAvailability |UIRemoteNotificationTypeBadge | UIRemoteNotificationTypeSound | UIRemoteNotificationTypeAlert)];
@@ -31,6 +32,10 @@
     if (notificationMessage)			// if there is a pending startup notification
 			[self didReceiveRemoteNotification];	// go ahead and process it
 
+
+		[[[ShelfController alloc] init] autorelease];
+
+    
     CDVPluginResult *pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK messageAsString:@"OK"];
     [self.commandDelegate sendPluginResult:pluginResult callbackId:command.callbackId];
 }
@@ -72,8 +77,9 @@
     #endif
 }
 
-+ (void)createNotificationChecker:(NSNotification *)notification
+- (void)createNotificationChecker:(NSNotification *)notification
 {
+	NSLog(@"create notification checker");
 	// Check if the app is runnig in response to a notification
 		NSDictionary *launchOptions = [notification userInfo] ;
     NSDictionary *payload = [launchOptions objectForKey:UIApplicationLaunchOptionsRemoteNotificationKey];
@@ -127,15 +133,6 @@
 }
 
 - (void)didReceiveRemoteNotification:(NSDictionary *)userInfo
-{
-    #ifdef BAKER_NEWSSTAND
-    NSDictionary *aps = [userInfo objectForKey:@"aps"];
-    if (aps && [aps objectForKey:@"content-available"]) {
-        [self applicationWillHandleNewsstandNotificationOfContent:[userInfo objectForKey:@"content-name"]];
-    }
-    #endif
-}
-- (void)didReceiveRemoteNotification:(NSDictionary *)userInfo fetchCompletionHandler:(void (^)(UIBackgroundFetchResult result))handler
 {
     #ifdef BAKER_NEWSSTAND
     NSDictionary *aps = [userInfo objectForKey:@"aps"];
