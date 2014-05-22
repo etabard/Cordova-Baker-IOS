@@ -332,12 +332,143 @@
 
 - (void)refresh
 {
-    NSLog(@"Issue controller refresh withoud status");
+    [self refresh:[self.issue getStatus]];
 }
 
 - (void)refresh:(NSString *)status
 {
-    NSLog(@"Issue controller refresh status %s", status);
+    NSLog(@"[BakerShelf] Shelf UI - Refreshing %@ item with status from <%@> to <%@>", self.issue.ID, self.currentStatus, status);
+    if ([status isEqualToString:@"remote"])
+    {
+        // [self.priceLabel setText:NSLocalizedString(@"FREE_TEXT", nil)];
+
+        // [self.actionButton setTitle:NSLocalizedString(@"ACTION_REMOTE_TEXT", nil) forState:UIControlStateNormal];
+        // [self.spinner stopAnimating];
+
+        // self.actionButton.hidden = NO;
+        // self.archiveButton.hidden = YES;
+        // self.progressBar.hidden = YES;
+        // self.loadingLabel.hidden = YES;
+        // self.priceLabel.hidden = NO;
+    }
+    else if ([status isEqualToString:@"connecting"])
+    {
+        NSLog(@"[BakerShelf] '%@' is Connecting...", self.issue.ID);
+        // [self.spinner startAnimating];
+
+        // self.actionButton.hidden = YES;
+        // self.archiveButton.hidden = YES;
+        // self.progressBar.progress = 0;
+        // self.loadingLabel.text = NSLocalizedString(@"CONNECTING_TEXT", nil);
+        // self.loadingLabel.hidden = NO;
+        // self.progressBar.hidden = YES;
+        // self.priceLabel.hidden = YES;
+    }
+    else if ([status isEqualToString:@"downloading"])
+    {
+        NSLog(@"[BakerShelf] '%@' is Downloading...", self.issue.ID);
+        // [self.spinner startAnimating];
+
+        // self.actionButton.hidden = YES;
+        // self.archiveButton.hidden = YES;
+        // self.progressBar.progress = 0;
+        // self.loadingLabel.text = NSLocalizedString(@"DOWNLOADING_TEXT", nil);
+        // self.loadingLabel.hidden = NO;
+        // self.progressBar.hidden = NO;
+        // self.priceLabel.hidden = YES;
+    }
+    else if ([status isEqualToString:@"downloaded"])
+    {
+        NSLog(@"[BakerShelf] '%@' is Ready to be Read.", self.issue.ID);
+        // [self.actionButton setTitle:NSLocalizedString(@"ACTION_DOWNLOADED_TEXT", nil) forState:UIControlStateNormal];
+        // [self.spinner stopAnimating];
+
+        // self.actionButton.hidden = NO;
+        // self.archiveButton.hidden = NO;
+        // self.loadingLabel.hidden = YES;
+        // self.progressBar.hidden = YES;
+        // self.priceLabel.hidden = YES;
+    }
+    else if ([status isEqualToString:@"bundled"])
+    {
+        // [self.actionButton setTitle:NSLocalizedString(@"ACTION_DOWNLOADED_TEXT", nil) forState:UIControlStateNormal];
+        // [self.spinner stopAnimating];
+
+        // self.actionButton.hidden = NO;
+        // self.archiveButton.hidden = YES;
+        // self.loadingLabel.hidden = YES;
+        // self.progressBar.hidden = YES;
+        // self.priceLabel.hidden = YES;
+    }
+    else if ([status isEqualToString:@"opening"])
+    {
+        // [self.spinner startAnimating];
+
+        // self.actionButton.hidden = YES;
+        // self.archiveButton.hidden = YES;
+        // self.loadingLabel.text = NSLocalizedString(@"OPENING_TEXT", nil);
+        // self.loadingLabel.hidden = NO;
+        // self.progressBar.hidden = YES;
+        // self.priceLabel.hidden = YES;
+    }
+    else if ([status isEqualToString:@"purchasable"])
+    {
+        NSLog(@"[BakerShelf] '%@' is Purchasable... %@", self.issue.ID, self.issue.price);
+        // [self.actionButton setTitle:NSLocalizedString(@"ACTION_BUY_TEXT", nil) forState:UIControlStateNormal];
+        // [self.spinner stopAnimating];
+
+        // if (self.issue.price) {
+        //     [self.priceLabel setText:self.issue.price];
+        // }
+
+        // self.actionButton.hidden = NO;
+        // self.archiveButton.hidden = YES;
+        // self.progressBar.hidden = YES;
+        // self.loadingLabel.hidden = YES;
+        // self.priceLabel.hidden = NO;
+    }
+    else if ([status isEqualToString:@"purchasing"])
+    {
+        NSLog(@"[BakerShelf] '%@' is being Purchased...", self.issue.ID);
+        // [self.spinner startAnimating];
+
+        // self.loadingLabel.text = NSLocalizedString(@"BUYING_TEXT", nil);
+
+        // self.actionButton.hidden = YES;
+        // self.archiveButton.hidden = YES;
+        // self.progressBar.hidden = YES;
+        // self.loadingLabel.hidden = NO;
+        // self.priceLabel.hidden = NO;
+    }
+    else if ([status isEqualToString:@"purchased"])
+    {
+        NSLog(@"[BakerShelf] '%@' is Purchased.", self.issue.ID);
+        // [self.priceLabel setText:NSLocalizedString(@"PURCHASED_TEXT", nil)];
+
+        // [self.actionButton setTitle:NSLocalizedString(@"ACTION_REMOTE_TEXT", nil) forState:UIControlStateNormal];
+        // [self.spinner stopAnimating];
+
+        // self.actionButton.hidden = NO;
+        // self.archiveButton.hidden = YES;
+        // self.progressBar.hidden = YES;
+        // self.loadingLabel.hidden = YES;
+        // self.priceLabel.hidden = NO;
+    }
+    else if ([status isEqualToString:@"unpriced"])
+    {
+        // [self.spinner startAnimating];
+
+        // self.loadingLabel.text = NSLocalizedString(@"RETRIEVING_TEXT", nil);
+
+        // self.actionButton.hidden = YES;
+        // self.archiveButton.hidden = YES;
+        // self.progressBar.hidden = YES;
+        // self.loadingLabel.hidden = NO;
+        // self.priceLabel.hidden = YES;
+    }
+
+
+    self.currentStatus = status;
 }
 
 @end
