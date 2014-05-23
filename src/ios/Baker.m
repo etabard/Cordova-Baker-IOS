@@ -52,6 +52,25 @@
     [self.commandDelegate sendPluginResult:pluginResult callbackId:command.callbackId];
 }
 
+- (void)getBooks: (CDVInvokedUrlCommand*)command
+{
+    NSError *e = nil;
+    NSMutableArray *data = [[NSMutableArray alloc] init];
+    for (BakerIssue *issue in [self.shelfController issues]) {
+        [data addObject:[self issueToDictionnary:issue]];
+    }
+    NSData *jsonData = [NSJSONSerialization dataWithJSONObject:data options:NSJSONWritingPrettyPrinted error: &e];
+    NSString *jsonString = [[NSString alloc] initWithData:jsonData encoding:NSUTF8StringEncoding];
+    CDVPluginResult *pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK messageAsString:jsonString];
+
+    [self.commandDelegate sendPluginResult:pluginResult callbackId:command.callbackId];
+}
+
+- (NSDictionary *)issueToDictionnary:(BakerIssue *)issue
+{
+    return [NSDictionary dictionaryWithObjectsAndKeys:issue.ID,@"ID",issue.title,@"title",issue.info,@"info",issue.date,@"date", [issue.url absoluteString], @"url", issue.path, @"path", issue.productID, @"productID", issue.price, @"price",issue.coverPath, @"coverPath", nil];
+}
+
 
 - (void)applicationWillHandleNewsstandNotificationOfContent:(NSString *)contentName
 {

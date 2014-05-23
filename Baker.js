@@ -70,5 +70,17 @@ Baker.prototype.refresh = function() {
     exec('refresh', [], setupOk, setupFailed);
 }
 
+Baker.prototype.getBooks = function () {
+    var setupOk = function (arguments) {
+        console.log('get books', arguments);
+        //protectCall(options.success, 'init::success');
+    };
+    var setupFailed = function () {
+        console.log('restore failed');
+        protectCall(options.error, 'init::error');
+    };
+    exec('getBooks', [], setupOk, setupFailed);
+}
+
 
 module.exports = new Baker();
