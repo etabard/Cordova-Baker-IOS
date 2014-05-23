@@ -78,6 +78,15 @@
         [self addIssueObserver:@selector(handleDownloadFinished:) name:self.issue.notificationDownloadFinishedName];
         [self addIssueObserver:@selector(handleDownloadError:) name:self.issue.notificationDownloadErrorName];
         [self addIssueObserver:@selector(handleUnzipError:) name:self.issue.notificationUnzipErrorName];
+
+        NKLibrary *nkLib = [NKLibrary sharedLibrary];
+        for (NKAssetDownload *asset in [nkLib downloadingAssets]) {
+            if ([asset.issue.name isEqualToString:self.issue.ID]) {
+                NSLog(@"[BakerShelf] Resuming abandoned Newsstand download: %@", asset.issue.name);
+                [self.issue downloadWithAsset:asset];
+            }
+        }
+
         #endif
     }
     return self;

@@ -95,6 +95,14 @@
 
         #ifdef BAKER_NEWSSTAND
         [self handleRefresh:nil];
+
+        NSMutableSet *subscriptions = [NSMutableSet setWithArray:AUTO_RENEWABLE_SUBSCRIPTION_PRODUCT_IDS];
+        if ([FREE_SUBSCRIPTION_PRODUCT_ID length] > 0 && ![purchasesManager isPurchased:FREE_SUBSCRIPTION_PRODUCT_ID]) {
+            [subscriptions addObject:FREE_SUBSCRIPTION_PRODUCT_ID];
+        }
+        [purchasesManager retrievePricesFor:subscriptions andEnableFailureNotifications:NO];
+        
+
         #endif
     }
     return self;
@@ -143,7 +151,7 @@
 
 #ifdef BAKER_NEWSSTAND
 - (void)handleRefresh:(NSNotification *)notification {
-
+    [self setrefreshButtonEnabled:NO];
     [issuesManager refresh:^(BOOL status) {
         if(status) {
             self.issues = issuesManager.issues;
@@ -195,6 +203,7 @@
                     NSLog(@"Retrieve purchase from app store %@", [(IssueController*)obj issue].productID);
                     //[(IssueController *)obj refreshContentWithCache:NO];
                 }];
+                [self setrefreshButtonEnabled:YES];
             }];
 
             [purchasesManager retrievePricesFor:issuesManager.productIDs andEnableFailureNotifications:NO];
@@ -202,6 +211,8 @@
             [Utils showAlertWithTitle:NSLocalizedString(@"INTERNET_CONNECTION_UNAVAILABLE_TITLE", nil)
                               message:NSLocalizedString(@"INTERNET_CONNECTION_UNAVAILABLE_MESSAGE", nil)
                           buttonTitle:NSLocalizedString(@"INTERNET_CONNECTION_UNAVAILABLE_CLOSE", nil)];
+
+            [self setrefreshButtonEnabled:YES];
         }
     }];
 }
@@ -392,13 +403,13 @@
                           message:[transaction.error localizedDescription]
                       buttonTitle:NSLocalizedString(@"SUBSCRIPTION_FAILED_CLOSE", nil)];
     }
-
+    NSLog(@"Enable subscription mode");
     [self setSubscribeButtonEnabled:YES];
 }
 
 - (void)handleSubscriptionRestored:(NSNotification *)notification {
     SKPaymentTransaction *transaction = [notification.userInfo objectForKey:@"transaction"];
-
+    NSLog(@"Handle subscription restored %@", transaction.payment.productIdentifier);
     [purchasesManager markAsPurchased:transaction.payment.productIdentifier];
 
     if (![purchasesManager finishTransaction:transaction]) {
@@ -433,6 +444,18 @@
             }
         }
         [shelfStatus save];
+    }
+}
+
+-(void)setrefreshButtonEnabled:(BOOL)enabled {
+    NSLog(@"Refresh mode enabled %i", enabled);
+}
+
+-(void)setSubscribeButtonEnabled:(BOOL)enabled {
+    if (enabled) {
+        NSLog(@"Enable subscription mode");
+    } else {
+        NSLog(@"Disable subscription mode");
     }
 }
 
