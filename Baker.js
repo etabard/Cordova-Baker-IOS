@@ -4,8 +4,10 @@
  * Copyright (c) Emmanuel Tabard 2014
  */
 
-var Baker = function () {
-};
+var Baker = (function () {
+    this.issues = [];
+});
+
 
 var noop = function () {};
 var log = noop;
@@ -37,11 +39,11 @@ Baker.prototype.init = function (options) {
     var that = this;
     var setupOk = function () {
         log('setup ok');
-        protectCall(options.success, 'init::success');
+        // protectCall(options.success, 'init::success');
     };
     var setupFailed = function () {
         log('setup failed');
-        protectCall(options.error, 'init::error');
+        // protectCall(options.error, 'init::error');
     };
     exec('setup', [], setupOk, setupFailed);
 };
@@ -49,11 +51,11 @@ Baker.prototype.init = function (options) {
 Baker.prototype.restore = function() {
     var setupOk = function () {
         console.log('restore ok');
-        protectCall(options.success, 'init::success');
+        // protectCall(options.success, 'init::success');
     };
     var setupFailed = function () {
         console.log('restore failed');
-        protectCall(options.error, 'init::error');
+        // protectCall(options.error, 'init::error');
     };
     exec('restore', [], setupOk, setupFailed);
 }
@@ -61,19 +63,44 @@ Baker.prototype.restore = function() {
 Baker.prototype.refresh = function() {
     var setupOk = function () {
         console.log('restore ok');
-        protectCall(options.success, 'init::success');
+        // protectCall(options.success, 'init::success');
     };
     var setupFailed = function () {
         console.log('restore failed');
-        protectCall(options.error, 'init::error');
+        // protectCall(options.error, 'init::error');
     };
     exec('refresh', [], setupOk, setupFailed);
 }
 
-Baker.prototype.getBooks = function () {
-    var setupOk = function (arguments) {
-        console.log('get books', arguments);
-        //protectCall(options.success, 'init::success');
+Baker.prototype.getBooks = function (success) {
+    var self = this;
+
+    var setupOk = function (books) {
+        console.log('get books', books);
+
+        var actualBookIds = {};
+
+        books.forEach(function(book) {
+            actualBookIds[book.ID] = book;
+
+            var _exists = self.issues.filter(function(tmp_book) {
+                return (tmp_book.ID == book.ID);
+            }).pop();
+
+            if (_exists) {
+                _exists.update(book);
+                return;
+            }
+            self.issues.push(new BakerIssue(book));
+        });
+
+        //remove old books
+        self.issues.filter(function(obj){
+            return !(obj.ID in actualBookIds);
+        }).forEach(function(book) {
+            self.issues.splice(self.issues.indexOf(book), 1);
+        });
+        protectCall(success, 'getBooks::success', self.issues);
     };
     var setupFailed = function () {
         console.log('restore failed');
@@ -82,5 +109,49 @@ Baker.prototype.getBooks = function () {
     exec('getBooks', [], setupOk, setupFailed);
 }
 
+Baker.prototype.getBookById = function (id) {
+    return this.issues.filter(function(book) {
+        return (book.ID == id);
+    }).pop();
+}
 
-module.exports = new Baker();
+Baker.prototype.purchase = function(BookId) {
+    exec('purchase', [BookId], function() {}, function() {});
+};
+
+Baker.prototype.download = function(BookId) {
+    exec('download', [BookId], function() {}, function() {});
+};
+
+
+
+var BakerIssue = (function (values) {
+    if (values) {
+        Object.keys(values).forEach(function(key) {
+            this[key] = values[key];
+        }.bind(this));
+    }
+});
+
+BakerIssue.prototype.update = function (values) {
+    Object.keys(values).forEach(function(key) {
+        if (this[key] && this[key] == values[key]) {
+            return;
+        }
+
+        this[key] = values[key];
+    }.bind(this));
+
+}
+
+BakerIssue.prototype.purchase = function () {
+    BakerInstance.purchase(this.ID);
+}
+
+BakerIssue.prototype.download = function () {
+    BakerInstance.download(this.ID);
+}
+
+var BakerInstance = new Baker();
+
+module.exports = BakerInstance;

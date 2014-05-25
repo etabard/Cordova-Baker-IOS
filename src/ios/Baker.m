@@ -1,4 +1,5 @@
 #import "Baker.h"
+#import "IssueController.h"
 #import "Constants.h"
 #import "BakerAPI.h"
 #import "IssuesManager.h"
@@ -54,21 +55,63 @@
 
 - (void)getBooks: (CDVInvokedUrlCommand*)command
 {
-    NSError *e = nil;
     NSMutableArray *data = [[NSMutableArray alloc] init];
     for (BakerIssue *issue in [self.shelfController issues]) {
         [data addObject:[self issueToDictionnary:issue]];
     }
-    NSData *jsonData = [NSJSONSerialization dataWithJSONObject:data options:NSJSONWritingPrettyPrinted error: &e];
-    NSString *jsonString = [[NSString alloc] initWithData:jsonData encoding:NSUTF8StringEncoding];
-    CDVPluginResult *pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK messageAsString:jsonString];
+
+    CDVPluginResult *pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK messageAsArray:data];
 
     [self.commandDelegate sendPluginResult:pluginResult callbackId:command.callbackId];
 }
 
+- (void)purchase: (CDVInvokedUrlCommand *)command
+{
+    CDVPluginResult *pluginResult = nil;
+    NSString* bookId = [command.arguments objectAtIndex:0];
+    IssueController *currentBook = [self getIssueControllerById:bookId];
+    
+    if (currentBook) {
+        [currentBook buy];
+        [CDVPluginResult resultWithStatus:CDVCommandStatus_OK messageAsString:@"OK"];
+    } else {
+        [CDVPluginResult resultWithStatus:CDVCommandStatus_ERROR messageAsString:@"ERROR"];
+    }
+    
+    [self.commandDelegate sendPluginResult:pluginResult callbackId:command.callbackId];
+}
+
+- (void)download: (CDVInvokedUrlCommand *)command
+{
+    CDVPluginResult *pluginResult = nil;
+    NSString* bookId = [command.arguments objectAtIndex:0];
+    IssueController *currentBook = [self getIssueControllerById:bookId];
+    if (currentBook) {
+        [currentBook download];
+        [CDVPluginResult resultWithStatus:CDVCommandStatus_OK messageAsString:@"OK"];
+    } else {
+        [CDVPluginResult resultWithStatus:CDVCommandStatus_ERROR messageAsString:@"ERROR"];
+    }
+    
+    [self.commandDelegate sendPluginResult:pluginResult callbackId:command.callbackId];
+}
+
+
+- (IssueController *) getIssueControllerById:(NSString *)bookId
+{
+    IssueController *currentBook = nil;
+    for (IssueController *issueController in [self.shelfController issueViewControllers]) {
+        if ([issueController.issue.ID isEqualToString:bookId]) {
+            currentBook = issueController;
+            break;
+        }
+    }
+    return currentBook;
+}
+
 - (NSDictionary *)issueToDictionnary:(BakerIssue *)issue
 {
-    return [NSDictionary dictionaryWithObjectsAndKeys:issue.ID,@"ID",issue.title,@"title",issue.info,@"info",issue.date,@"date", [issue.url absoluteString], @"url", issue.path, @"path", issue.productID, @"productID", issue.price, @"price",issue.coverPath, @"coverPath", nil];
+    return [NSDictionary dictionaryWithObjectsAndKeys:issue.ID,@"ID",issue.title,@"title",issue.info,@"info",issue.date,@"date", issue.getStatus, @"status", [issue.url absoluteString], @"url", issue.path, @"path", issue.productID, @"productID", issue.price, @"price",[issue.coverURL absoluteString], @"coverURL", issue.coverPath, @"coverPath", nil];
 }
 
 
