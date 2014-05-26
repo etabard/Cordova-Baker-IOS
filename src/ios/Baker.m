@@ -96,6 +96,21 @@
     [self.commandDelegate sendPluginResult:pluginResult callbackId:command.callbackId];
 }
 
+- (void)archive: (CDVInvokedUrlCommand *)command
+{
+    CDVPluginResult *pluginResult = nil;
+    NSString* bookId = [command.arguments objectAtIndex:0];
+    IssueController *currentBook = [self getIssueControllerById:bookId];
+    if (currentBook) {
+        [currentBook archive];
+        [CDVPluginResult resultWithStatus:CDVCommandStatus_OK messageAsString:@"OK"];
+    } else {
+        [CDVPluginResult resultWithStatus:CDVCommandStatus_ERROR messageAsString:@"ERROR"];
+    }
+    
+    [self.commandDelegate sendPluginResult:pluginResult callbackId:command.callbackId];
+}
+
 
 - (IssueController *) getIssueControllerById:(NSString *)bookId
 {

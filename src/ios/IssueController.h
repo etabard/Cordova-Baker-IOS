@@ -86,7 +86,7 @@ typedef struct {
 
 #pragma mark - Newsstand archive management
 #ifdef BAKER_NEWSSTAND
-- (void)archiveButtonPressed:(UIButton *)sender;
+- (void)archive;
 #endif
 
 @end

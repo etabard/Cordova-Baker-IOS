@@ -123,6 +123,10 @@ Baker.prototype.download = function(BookId) {
     exec('download', [BookId], function() {}, function() {});
 };
 
+Baker.prototype.archive = function(BookId) {
+    exec('archive', [BookId], function() {}, function() {});
+};
+
 
 
 var BakerIssue = (function (values) {
@@ -150,6 +154,10 @@ BakerIssue.prototype.purchase = function () {
 
 BakerIssue.prototype.download = function () {
     BakerInstance.download(this.ID);
+}
+
+BakerIssue.prototype.archive = function () {
+    BakerInstance.archive(this.ID);
 }
 
 var BakerInstance = new Baker();

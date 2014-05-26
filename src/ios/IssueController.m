@@ -279,7 +279,7 @@
 #pragma mark - Newsstand archive management
 
 #ifdef BAKER_NEWSSTAND
-- (void)archiveButtonPressed:(UIButton *)sender
+- (void)archive
 {
     UIAlertView *updateAlert = [[UIAlertView alloc]
                                 initWithTitle: NSLocalizedString(@"ARCHIVE_ALERT_TITLE", nil)
