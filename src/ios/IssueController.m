@@ -34,6 +34,7 @@
 
 #import "IssueController.h"
 #import "SSZipArchive.h"
+#import "BakerLocalizedString.h"
 #ifdef BAKER_NEWSSTAND
 #import "PurchasesManager.h"
 #endif
@@ -172,14 +173,14 @@
         if ([purchasesManager finishTransaction:transaction]) {
             if (!transaction.originalTransaction) {
                 // Do not show alert on restoring a transaction
-                [Utils showAlertWithTitle:NSLocalizedString(@"ISSUE_PURCHASE_SUCCESSFUL_TITLE", nil)
-                                  message:[NSString stringWithFormat:NSLocalizedString(@"ISSUE_PURCHASE_SUCCESSFUL_MESSAGE", nil), self.issue.title]
-                              buttonTitle:NSLocalizedString(@"ISSUE_PURCHASE_SUCCESSFUL_CLOSE", nil)];
+                [Utils showAlertWithTitle:[[BakerLocalizedString sharedInstance] NSLocalizedString:@"ISSUE_PURCHASE_SUCCESSFUL_TITLE"]
+                                  message:[NSString stringWithFormat:[[BakerLocalizedString sharedInstance] NSLocalizedString:@"ISSUE_PURCHASE_SUCCESSFUL_MESSAGE"], self.issue.title]
+                              buttonTitle:[[BakerLocalizedString sharedInstance] NSLocalizedString:@"ISSUE_PURCHASE_SUCCESSFUL_CLOSE"]];
             }
         } else {
-            [Utils showAlertWithTitle:NSLocalizedString(@"TRANSACTION_RECORDING_FAILED_TITLE", nil)
-                              message:NSLocalizedString(@"TRANSACTION_RECORDING_FAILED_MESSAGE", nil)
-                          buttonTitle:NSLocalizedString(@"TRANSACTION_RECORDING_FAILED_CLOSE", nil)];
+            [Utils showAlertWithTitle:[[BakerLocalizedString sharedInstance] NSLocalizedString:@"TRANSACTION_RECORDING_FAILED_TITLE"]
+                              message:[[BakerLocalizedString sharedInstance] NSLocalizedString:@"TRANSACTION_RECORDING_FAILED_MESSAGE"]
+                          buttonTitle:[[BakerLocalizedString sharedInstance] NSLocalizedString:@"TRANSACTION_RECORDING_FAILED_CLOSE"]];
         }
 
         self.issue.transientStatus = BakerIssueTransientStatusNone;
@@ -195,9 +196,9 @@
     if ([transaction.payment.productIdentifier isEqualToString:issue.productID]) {
         // Show an error, unless it was the user who cancelled the transaction
         if (transaction.error.code != SKErrorPaymentCancelled) {
-            [Utils showAlertWithTitle:NSLocalizedString(@"ISSUE_PURCHASE_FAILED_TITLE", nil)
+            [Utils showAlertWithTitle:[[BakerLocalizedString sharedInstance] NSLocalizedString:@"ISSUE_PURCHASE_FAILED_TITLE"]
                               message:[transaction.error localizedDescription]
-                          buttonTitle:NSLocalizedString(@"ISSUE_PURCHASE_FAILED_CLOSE", nil)];
+                          buttonTitle:[[BakerLocalizedString sharedInstance] NSLocalizedString:@"ISSUE_PURCHASE_FAILED_CLOSE"]];
         }
 
         [self removePurchaseObserver:@"notification_issue_purchased"];
@@ -260,17 +261,17 @@
     [self refresh];
 }
 - (void)handleDownloadError:(NSNotification *)notification {
-    [Utils showAlertWithTitle:NSLocalizedString(@"DOWNLOAD_FAILED_TITLE", nil)
-                      message:NSLocalizedString(@"DOWNLOAD_FAILED_MESSAGE", nil)
-                  buttonTitle:NSLocalizedString(@"DOWNLOAD_FAILED_CLOSE", nil)];
+    [Utils showAlertWithTitle:[[BakerLocalizedString sharedInstance] NSLocalizedString:@"DOWNLOAD_FAILED_TITLE"]
+                      message:[[BakerLocalizedString sharedInstance] NSLocalizedString:@"DOWNLOAD_FAILED_MESSAGE"]
+                  buttonTitle:[[BakerLocalizedString sharedInstance] NSLocalizedString:@"DOWNLOAD_FAILED_CLOSE"]];
 
     self.issue.transientStatus = BakerIssueTransientStatusNone;
     [self refresh];
 }
 - (void)handleUnzipError:(NSNotification *)notification {
-    [Utils showAlertWithTitle:NSLocalizedString(@"UNZIP_FAILED_TITLE", nil)
-                      message:NSLocalizedString(@"UNZIP_FAILED_MESSAGE", nil)
-                  buttonTitle:NSLocalizedString(@"UNZIP_FAILED_CLOSE", nil)];
+    [Utils showAlertWithTitle:[[BakerLocalizedString sharedInstance] NSLocalizedString:@"UNZIP_FAILED_TITLE"]
+                      message:[[BakerLocalizedString sharedInstance] NSLocalizedString:@"UNZIP_FAILED_MESSAGE" ]
+                  buttonTitle:[[BakerLocalizedString sharedInstance] NSLocalizedString:@"UNZIP_FAILED_CLOSE" ]];
 
     self.issue.transientStatus = BakerIssueTransientStatusNone;
     [self refresh];
@@ -282,11 +283,11 @@
 - (void)archive
 {
     UIAlertView *updateAlert = [[UIAlertView alloc]
-                                initWithTitle: NSLocalizedString(@"ARCHIVE_ALERT_TITLE", nil)
-                                message: NSLocalizedString(@"ARCHIVE_ALERT_MESSAGE", nil)
+                                initWithTitle: [[BakerLocalizedString sharedInstance] NSLocalizedString:@"ARCHIVE_ALERT_TITLE"]
+                                message: [[BakerLocalizedString sharedInstance] NSLocalizedString:@"ARCHIVE_ALERT_MESSAGE"]
                                 delegate: self
-                                cancelButtonTitle: NSLocalizedString(@"ARCHIVE_ALERT_BUTTON_CANCEL", nil)
-                                otherButtonTitles: NSLocalizedString(@"ARCHIVE_ALERT_BUTTON_OK", nil), nil];
+                                cancelButtonTitle: [[BakerLocalizedString sharedInstance] NSLocalizedString:@"ARCHIVE_ALERT_BUTTON_CANCEL"]
+                                otherButtonTitles: [[BakerLocalizedString sharedInstance] NSLocalizedString:@"ARCHIVE_ALERT_BUTTON_OK"], nil];
     [updateAlert show];
     [updateAlert release];
 }

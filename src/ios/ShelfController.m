@@ -36,6 +36,7 @@
 #import "IssueController.h"
 #import "NSData+Base64.h"
 #import "NSString+Extensions.h"
+#import "BakerLocalizedString.h"
 #import "Utils.h"
 
 @implementation ShelfController
@@ -208,9 +209,9 @@
 
             [purchasesManager retrievePricesFor:issuesManager.productIDs andEnableFailureNotifications:NO];
         } else {
-            [Utils showAlertWithTitle:NSLocalizedString(@"INTERNET_CONNECTION_UNAVAILABLE_TITLE", nil)
-                              message:NSLocalizedString(@"INTERNET_CONNECTION_UNAVAILABLE_MESSAGE", nil)
-                          buttonTitle:NSLocalizedString(@"INTERNET_CONNECTION_UNAVAILABLE_CLOSE", nil)];
+            [Utils showAlertWithTitle:[[BakerLocalizedString sharedInstance] NSLocalizedString:@"INTERNET_CONNECTION_UNAVAILABLE_TITLE"]
+                              message:[[BakerLocalizedString sharedInstance] NSLocalizedString:@"INTERNET_CONNECTION_UNAVAILABLE_MESSAGE"]
+                          buttonTitle:[[BakerLocalizedString sharedInstance] NSLocalizedString:@"INTERNET_CONNECTION_UNAVAILABLE_CLOSE"]];
 
             [self setrefreshButtonEnabled:YES];
         }
@@ -262,12 +263,12 @@
     NSString *title;
     if ([api canGetPurchasesJSON]) {
         if (purchasesManager.subscribed) {
-            title = NSLocalizedString(@"SUBSCRIPTIONS_SHEET_SUBSCRIBED", nil);
+            title = [[BakerLocalizedString sharedInstance] NSLocalizedString:@"SUBSCRIPTIONS_SHEET_SUBSCRIBED"];
         } else {
-            title = NSLocalizedString(@"SUBSCRIPTIONS_SHEET_NOT_SUBSCRIBED", nil);
+            title =[[BakerLocalizedString sharedInstance] NSLocalizedString:@"SUBSCRIPTIONS_SHEET_NOT_SUBSCRIBED"];
         }
     } else {
-        title = NSLocalizedString(@"SUBSCRIPTIONS_SHEET_GENERIC", nil);
+        title = [[BakerLocalizedString sharedInstance] NSLocalizedString:@"SUBSCRIPTIONS_SHEET_GENERIC"];
     }
 
     UIActionSheet *sheet = [[UIActionSheet alloc]initWithTitle:title
@@ -279,7 +280,7 @@
 
     if (!purchasesManager.subscribed) {
         if ([FREE_SUBSCRIPTION_PRODUCT_ID length] > 0 && ![purchasesManager isPurchased:FREE_SUBSCRIPTION_PRODUCT_ID]) {
-            [sheet addButtonWithTitle:NSLocalizedString(@"SUBSCRIPTIONS_SHEET_FREE", nil)];
+            [sheet addButtonWithTitle:[[BakerLocalizedString sharedInstance] NSLocalizedString:@"SUBSCRIPTIONS_SHEET_FREE"]];
             [actions addObject:FREE_SUBSCRIPTION_PRODUCT_ID];
         }
 
@@ -294,11 +295,11 @@
     }
 
     if ([issuesManager hasProductIDs]) {
-        [sheet addButtonWithTitle:NSLocalizedString(@"SUBSCRIPTIONS_SHEET_RESTORE", nil)];
+        [sheet addButtonWithTitle:[[BakerLocalizedString sharedInstance] NSLocalizedString:@"SUBSCRIPTIONS_SHEET_RESTORE"]];
         [actions addObject:@"restore"];
     }
 
-    [sheet addButtonWithTitle:NSLocalizedString(@"SUBSCRIPTIONS_SHEET_CLOSE", nil)];
+    [sheet addButtonWithTitle:[[BakerLocalizedString sharedInstance] NSLocalizedString:@"SUBSCRIPTIONS_SHEET_CLOSE"]];
     [actions addObject:@"cancel"];
 
     self.subscriptionsActionSheetActions = actions;
@@ -322,9 +323,9 @@
             [[NSNotificationCenter defaultCenter] postNotificationName:@"BakerSubscriptionPurchase" object:self]; // -> Baker Analytics Event
             [self setSubscribeButtonEnabled:NO];
             if (![purchasesManager purchase:action]){
-                [Utils showAlertWithTitle:NSLocalizedString(@"SUBSCRIPTION_FAILED_TITLE", nil)
+                [Utils showAlertWithTitle:[[BakerLocalizedString sharedInstance] NSLocalizedString:@"SUBSCRIPTION_FAILED_TITLE"]
                                   message:nil
-                              buttonTitle:NSLocalizedString(@"SUBSCRIPTION_FAILED_CLOSE", nil)];
+                                                                                       buttonTitle:[[BakerLocalizedString sharedInstance] NSLocalizedString:@"SUBSCRIPTION_FAILED_CLOSE"]];
                 [self setSubscribeButtonEnabled:YES];
             }
         }
@@ -333,9 +334,9 @@
 
 - (void)handleRestoreFailed:(NSNotification *)notification {
     NSError *error = [notification.userInfo objectForKey:@"error"];
-    [Utils showAlertWithTitle:NSLocalizedString(@"RESTORE_FAILED_TITLE", nil)
+    [Utils showAlertWithTitle:[[BakerLocalizedString sharedInstance] NSLocalizedString:@"RESTORE_FAILED_TITLE"]
                       message:[error localizedDescription]
-                  buttonTitle:NSLocalizedString(@"RESTORE_FAILED_CLOSE", nil)];
+                  buttonTitle:[[BakerLocalizedString sharedInstance] NSLocalizedString:@"RESTORE_FAILED_CLOSE"]];
 
     [self.blockingProgressView dismissWithClickedButtonIndex:0 animated:YES];
 
@@ -347,9 +348,9 @@
         NSSet *productIDs = [NSSet setWithArray:[[notRecognisedTransactions valueForKey:@"payment"] valueForKey:@"productIdentifier"]];
         NSString *productsList = [[productIDs allObjects] componentsJoinedByString:@", "];
 
-        [Utils showAlertWithTitle:NSLocalizedString(@"RESTORED_ISSUE_NOT_RECOGNISED_TITLE", nil)
-                          message:[NSString stringWithFormat:NSLocalizedString(@"RESTORED_ISSUE_NOT_RECOGNISED_MESSAGE", nil), productsList]
-                      buttonTitle:NSLocalizedString(@"RESTORED_ISSUE_NOT_RECOGNISED_CLOSE", nil)];
+        [Utils showAlertWithTitle:[[BakerLocalizedString sharedInstance] NSLocalizedString:@"RESTORED_ISSUE_NOT_RECOGNISED_TITLE"]
+                          message:[NSString stringWithFormat:[[BakerLocalizedString sharedInstance] NSLocalizedString:@"RESTORED_ISSUE_NOT_RECOGNISED_MESSAGE"], productsList]
+                      buttonTitle:[[BakerLocalizedString sharedInstance] NSLocalizedString:@"RESTORED_ISSUE_NOT_RECOGNISED_CLOSE"]];
 
         for (SKPaymentTransaction *transaction in notRecognisedTransactions) {
             [[SKPaymentQueue defaultQueue] finishTransaction:transaction];
@@ -381,16 +382,16 @@
 
     if ([purchasesManager finishTransaction:transaction]) {
         if (!purchasesManager.subscribed) {
-            [Utils showAlertWithTitle:NSLocalizedString(@"SUBSCRIPTION_SUCCESSFUL_TITLE", nil)
-                              message:NSLocalizedString(@"SUBSCRIPTION_SUCCESSFUL_MESSAGE", nil)
-                          buttonTitle:NSLocalizedString(@"SUBSCRIPTION_SUCCESSFUL_CLOSE", nil)];
+            [Utils showAlertWithTitle:[[BakerLocalizedString sharedInstance] NSLocalizedString:@"SUBSCRIPTION_SUCCESSFUL_TITLE"]
+                              message:[[BakerLocalizedString sharedInstance] NSLocalizedString:@"SUBSCRIPTION_SUCCESSFUL_MESSAGE"]
+                          buttonTitle:[[BakerLocalizedString sharedInstance] NSLocalizedString:@"SUBSCRIPTION_SUCCESSFUL_CLOSE"]];
 
             [self handleRefresh:nil];
         }
     } else {
-        [Utils showAlertWithTitle:NSLocalizedString(@"TRANSACTION_RECORDING_FAILED_TITLE", nil)
-                          message:NSLocalizedString(@"TRANSACTION_RECORDING_FAILED_MESSAGE", nil)
-                      buttonTitle:NSLocalizedString(@"TRANSACTION_RECORDING_FAILED_CLOSE", nil)];
+        [Utils showAlertWithTitle:[[BakerLocalizedString sharedInstance] NSLocalizedString:@"TRANSACTION_RECORDING_FAILED_TITLE"]
+                          message:[[BakerLocalizedString sharedInstance] NSLocalizedString:@"TRANSACTION_RECORDING_FAILED_MESSAGE"]
+                      buttonTitle:[[BakerLocalizedString sharedInstance] NSLocalizedString:@"TRANSACTION_RECORDING_FAILED_CLOSE"]];
     }
 }
 
@@ -399,9 +400,9 @@
 
     // Show an error, unless it was the user who cancelled the transaction
     if (transaction.error.code != SKErrorPaymentCancelled) {
-        [Utils showAlertWithTitle:NSLocalizedString(@"SUBSCRIPTION_FAILED_TITLE", nil)
+        [Utils showAlertWithTitle:[[BakerLocalizedString sharedInstance] NSLocalizedString:@"SUBSCRIPTION_FAILED_TITLE"]
                           message:[transaction.error localizedDescription]
-                      buttonTitle:NSLocalizedString(@"SUBSCRIPTION_FAILED_CLOSE", nil)];
+                      buttonTitle:[[BakerLocalizedString sharedInstance] NSLocalizedString:@"SUBSCRIPTION_FAILED_CLOSE"]];
     }
     NSLog(@"Enable subscription mode");
     [self setSubscribeButtonEnabled:YES];
@@ -462,9 +463,9 @@
 - (void)handleProductsRequestFailed:(NSNotification *)notification {
     NSError *error = [notification.userInfo objectForKey:@"error"];
 
-    [Utils showAlertWithTitle:NSLocalizedString(@"PRODUCTS_REQUEST_FAILED_TITLE", nil)
+    [Utils showAlertWithTitle:[[BakerLocalizedString sharedInstance] NSLocalizedString:@"PRODUCTS_REQUEST_FAILED_TITLE"]
                       message:[error localizedDescription]
-                  buttonTitle:NSLocalizedString(@"PRODUCTS_REQUEST_FAILED_CLOSE", nil)];
+                  buttonTitle:[[BakerLocalizedString sharedInstance] NSLocalizedString:@"PRODUCTS_REQUEST_FAILED_CLOSE"]];
 }
 
 #endif
@@ -492,9 +493,9 @@
             for (IssueController *controller in issueViewControllers) {
                 [controller refresh];
             }
-            [Utils showAlertWithTitle:NSLocalizedString(@"ISSUE_OPENING_FAILED_TITLE", nil)
-                              message:NSLocalizedString(@"ISSUE_OPENING_FAILED_MESSAGE", nil)
-                          buttonTitle:NSLocalizedString(@"ISSUE_OPENING_FAILED_CLOSE", nil)];
+            [Utils showAlertWithTitle:[[BakerLocalizedString sharedInstance] NSLocalizedString:@"ISSUE_OPENING_FAILED_TITLE"]
+                              message:[[BakerLocalizedString sharedInstance] NSLocalizedString:@"ISSUE_OPENING_FAILED_MESSAGE"]
+                          buttonTitle:[[BakerLocalizedString sharedInstance] NSLocalizedString:@"ISSUE_OPENING_FAILED_CLOSE"]];
         }
     }
     #else

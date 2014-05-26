@@ -6,13 +6,13 @@
     version="0.0.1">
 
     <name>Baker</name>
-	<description>Baker integration for phonegap</description>
+	<description>Baker plugin for phonegap</description>
     <engines>
-        <engine name="cordova" version=">=2.4.0" />
+        <engine name="cordova" version=">=3.0.0" />
     </engines>
 	
 	<license>MIT</license>
-    <keywords>cordova,phonegap,newsstand,news,stand,kit,newsstandkit,ios,baker</keywords>
+    <keywords>newsstand,ios,baker</keywords>
     <!-- ios -->
     <platform name="ios">
         <js-module src="Baker.js" name="Baker">
@@ -32,6 +32,9 @@
         <header-file src="src/ios/Baker.h"  compiler-flags="-fno-objc-arc"/>
         <source-file src="src/ios/Baker.m"  compiler-flags="-fno-objc-arc"/>
 
+        <header-file src="src/ios/BakerLocalizedString.h"  compiler-flags="-fno-objc-arc"/>
+        <source-file src="src/ios/BakerLocalizedString.m"  compiler-flags="-fno-objc-arc"/>
+        
         <header-file src="src/ios/ShelfController.h"  compiler-flags="-fno-objc-arc"/>
         <source-file src="src/ios/ShelfController.m"  compiler-flags="-fno-objc-arc"/>
 
@@ -113,7 +116,7 @@
 
         <header-file src="src/ios/BakerView/lib/minizip/crypt.h" target-dir="minizip/" compiler-flags="-fno-objc-arc"/>
 
-
+        <resource-file src="src/ios/Baker.bundle" />
         
 
         <framework src="SystemConfiguration.framework" />
