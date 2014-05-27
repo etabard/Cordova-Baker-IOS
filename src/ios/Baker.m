@@ -73,9 +73,9 @@
     
     if (currentBook) {
         [currentBook buy];
-        [CDVPluginResult resultWithStatus:CDVCommandStatus_OK messageAsString:@"OK"];
+        pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK messageAsString:@"OK"];
     } else {
-        [CDVPluginResult resultWithStatus:CDVCommandStatus_ERROR messageAsString:@"ERROR"];
+        pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_ERROR messageAsString:@"ERROR"];
     }
     
     [self.commandDelegate sendPluginResult:pluginResult callbackId:command.callbackId];
@@ -88,9 +88,9 @@
     IssueController *currentBook = [self getIssueControllerById:bookId];
     if (currentBook) {
         [currentBook download];
-        [CDVPluginResult resultWithStatus:CDVCommandStatus_OK messageAsString:@"OK"];
+        pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK messageAsString:@"OK"];
     } else {
-        [CDVPluginResult resultWithStatus:CDVCommandStatus_ERROR messageAsString:@"ERROR"];
+        pluginResult= [CDVPluginResult resultWithStatus:CDVCommandStatus_ERROR messageAsString:@"ERROR"];
     }
     
     [self.commandDelegate sendPluginResult:pluginResult callbackId:command.callbackId];
@@ -103,12 +103,58 @@
     IssueController *currentBook = [self getIssueControllerById:bookId];
     if (currentBook) {
         [currentBook archive];
-        [CDVPluginResult resultWithStatus:CDVCommandStatus_OK messageAsString:@"OK"];
+        pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK messageAsString:@"OK"];
     } else {
-        [CDVPluginResult resultWithStatus:CDVCommandStatus_ERROR messageAsString:@"ERROR"];
+        pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_ERROR messageAsString:@"ERROR"];
     }
     
     [self.commandDelegate sendPluginResult:pluginResult callbackId:command.callbackId];
+}
+
+- (void)getBookInfos: (CDVInvokedUrlCommand *)command
+{
+    CDVPluginResult *pluginResult = nil;
+    NSString* bookId = [command.arguments objectAtIndex:0];
+
+    IssueController *currentBook = [self getIssueControllerById:bookId];
+    if (currentBook) {
+        NSDictionary *bookDatas = [self getBookJson:currentBook.issue];
+
+        if (bookDatas) {
+            pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK messageAsDictionary:bookDatas];
+        } else {
+            pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_ERROR messageAsString:@"ERROR"];
+        }
+        
+    } else {
+        pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_ERROR messageAsString:@"ERROR"];
+    }
+    
+    [self.commandDelegate sendPluginResult:pluginResult callbackId:command.callbackId];
+}
+
+- (NSDictionary *) getBookJson:(BakerIssue *)issue
+{
+    NSString *bookJSONPath = [issue.path stringByAppendingPathComponent:@"book.json"];
+    if (![[NSFileManager defaultManager] fileExistsAtPath:bookJSONPath]) {
+        return nil;
+    } 
+    NSError* error = nil;
+    NSData* bookJSON = [NSData dataWithContentsOfFile:bookJSONPath options:0 error:&error];
+    if (error) {
+        NSLog(@"[BakerBook] ERROR reading 'book.json': %@", error.localizedDescription);
+        return nil;
+    } 
+
+    NSDictionary* bookData = [NSJSONSerialization JSONObjectWithData:bookJSON
+                                                         options:0
+                                                           error:&error];
+    if (error) {
+        NSLog(@"[BakerBook] ERROR parsing 'book.json': %@", error.localizedDescription);
+        return nil;
+    }
+
+    return bookData;
 }
 
 

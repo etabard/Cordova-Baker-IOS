@@ -96,7 +96,6 @@ static char launchNotificationKey;
 }
 
 - (void)applicationDidBecomeActive:(UIApplication *)application {
-    NSLog(@"active");
     Baker *pushHandler = nil;
 
     pushHandler = [self getCommandInstance:@"Baker"];
@@ -113,7 +112,6 @@ static char launchNotificationKey;
 }
 
 - (void)applicationDidEnterBackground:(UIApplication *)application {
-    NSLog(@"enter background");
     Baker *pushHandler = nil;
 
     pushHandler = [self getCommandInstance:@"Baker"];
@@ -121,7 +119,6 @@ static char launchNotificationKey;
 }
 
 - (void)applicationWillResignActive:(UIApplication *)application {
-    NSLog(@"application will resign active");
     Baker *pushHandler = nil;
 
     pushHandler = [self getCommandInstance:@"Baker"];

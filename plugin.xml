@@ -13,9 +13,16 @@
 	
 	<license>MIT</license>
     <keywords>newsstand,ios,baker</keywords>
+    <repo>https://github.com/etabard/Cordova-Baker-IOS</repo>
+    <issue>https://github.com/etabard/Cordova-Baker-IOS/issues</issue>
     <!-- ios -->
     <platform name="ios">
-        <js-module src="Baker.js" name="Baker">
+        <preference name="BAKER_NEWSSTAND" />
+        <preference name="BAKER_BASE_URL" />
+        <preference name="FREE_SUBSCRIPTION_PRODUCT_ID" />
+        <preference name="AUTO_RENEWABLE_SUBSCRIPTION_PRODUCT_IDS" />
+
+        <js-module src="www/Baker.js" name="Baker">
             <clobbers target="Baker" />
         </js-module>
         
@@ -34,7 +41,7 @@
 
         <header-file src="src/ios/BakerLocalizedString.h"  compiler-flags="-fno-objc-arc"/>
         <source-file src="src/ios/BakerLocalizedString.m"  compiler-flags="-fno-objc-arc"/>
-        
+
         <header-file src="src/ios/ShelfController.h"  compiler-flags="-fno-objc-arc"/>
         <source-file src="src/ios/ShelfController.m"  compiler-flags="-fno-objc-arc"/>
 
@@ -181,5 +188,19 @@
                 </dict>
             </dict>
         </config-file>
+        
+        <config-file target="*-Info.plist" parent="BakerOptions">
+            <dict>
+              <key>NewstandEnabled</key>
+              <string>$BAKER_NEWSSTAND</string>
+              <key>BaseUrl</key>
+              <string>$BAKER_BASE_URL</string>
+              <key>FreeSubscriptionProductId</key>
+              <string>$FREE_SUBSCRIPTION_PRODUCT_ID</string>
+              <key>AutoRenewableSubscriptionProductIds</key>
+              <string>$AUTO_RENEWABLE_SUBSCRIPTION_PRODUCT_IDS</string>
+            </dict>
+        </config-file>
+
     </platform>
 </plugin>

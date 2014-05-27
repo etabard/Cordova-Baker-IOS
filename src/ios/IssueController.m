@@ -347,6 +347,11 @@
 
 - (void)refresh:(NSString *)status
 {
+    //XXX please improve
+    //Need that call to cache covers
+    [self.issue getCoverWithCache:TRUE andBlock:^(UIImage *image) {
+        //Nothing to do here
+    }];
     NSLog(@"[BakerShelf] Shelf UI - Refreshing %@ item with status from <%@> to <%@>", self.issue.ID, self.currentStatus, status);
     if ([status isEqualToString:@"remote"])
     {

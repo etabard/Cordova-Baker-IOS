@@ -76,8 +76,6 @@ Baker.prototype.getBooks = function (success) {
     var self = this;
 
     var setupOk = function (books) {
-        console.log('get books', books);
-
         var actualBookIds = {};
 
         books.forEach(function(book) {
@@ -127,6 +125,16 @@ Baker.prototype.archive = function(BookId) {
     exec('archive', [BookId], function() {}, function() {});
 };
 
+Baker.prototype.getBookInfos = function(BookId, success, error) {
+    var getOk = function (infos) {
+        protectCall(success, 'getBookInfos::success', infos);
+    };
+    var getFailed = function () {
+        protectCall(error, 'getBookInfos::error');
+    };
+    exec('getBookInfos', [BookId], getOk, getFailed);
+}
+
 
 
 var BakerIssue = (function (values) {
@@ -158,6 +166,10 @@ BakerIssue.prototype.download = function () {
 
 BakerIssue.prototype.archive = function () {
     BakerInstance.archive(this.ID);
+}
+
+BakerIssue.prototype.getInfos = function (success, error) {
+    BakerInstance.getBookInfos(this.ID, success, error);
 }
 
 var BakerInstance = new Baker();
