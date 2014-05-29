@@ -5,15 +5,23 @@
 #import "IssuesManager.h"
 #import "ShelfController.h"
 
+NSString * const kBakerEventsType[] = {
+    @"BakerApplicationReady",
+    @"BakerIssueStateChanged",
+    @"BakerIssueDownloadProgress",
+    @"BakerIssueCoverReady",
+    @"BakerRefreshStateChanged",
+};
+
 @implementation Baker
 
 @synthesize notificationMessage;
 @synthesize shelfController;
+@synthesize eventHandlerCallbackId;
 
 - (void)setup: (CDVInvokedUrlCommand*)command
 {
-	#ifdef BAKER_NEWSSTAND
-
+    #ifdef BAKER_NEWSSTAND
     NSLog(@"====== Baker Newsstand Mode enabled  ======");
     [BakerAPI generateUUIDOnce];
     // Let the device know we want to handle Newsstand push notifications
@@ -31,13 +39,81 @@
                name:@"UIApplicationDidFinishLaunchingNotification" object:nil];
     
 
-   	self.shelfController = [[[ShelfController alloc] init] autorelease];
+    self.shelfController = [[[ShelfController alloc] init] autorelease];
 
     
     CDVPluginResult *pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK messageAsString:@"OK"];
     [self.commandDelegate sendPluginResult:pluginResult callbackId:command.callbackId];
+    [[NSNotificationCenter defaultCenter] postNotificationName:@"BakerApplicationStart" object:self];
 }
 
++ (NSArray *)eventsType
+{
+    static NSArray *events;
+    static dispatch_once_t onceToken;
+    dispatch_once(&onceToken, ^{
+        events = [NSArray arrayWithObjects:kBakerEventsType count:5];
+    });
+    
+    return events;
+}
+- (void)startEventHandler:(CDVInvokedUrlCommand*)command
+{
+    self.eventHandlerCallbackId = command.callbackId;
+    
+    for (NSString *eventName in [Baker eventsType]) {
+        [[NSNotificationCenter defaultCenter] addObserver:self
+                                                 selector:@selector(handleReceiveEvent:)
+                                                     name:eventName
+                                                   object:nil];
+    }
+
+}
+
+- (void)handleReceiveEvent:(NSNotification *)notification {
+    if (!self.eventHandlerCallbackId) {
+        return;
+    }
+    
+    CDVPluginResult* result = nil;
+    NSLog(@"[Baker Event] received event %@", [notification name]);
+    if ([[notification name] isEqualToString:@"BakerApplicationReady"]) {
+        result = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK messageAsDictionary:[NSDictionary dictionaryWithObjectsAndKeys:[notification name],@"eventType", [notification object], @"data", nil]];
+    } else if ([[notification name] isEqualToString:@"BakerIssueStateChanged"]) {
+        result = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK messageAsDictionary:[NSDictionary dictionaryWithObjectsAndKeys:[notification name],@"eventType", [notification object], @"data", nil]];
+    } else if ([[notification name] isEqualToString:@"BakerIssueDownloadProgress"]) {
+        result = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK messageAsDictionary:[NSDictionary dictionaryWithObjectsAndKeys:[notification name],@"eventType", [notification object], @"data", nil]];
+    } else if ([[notification name] isEqualToString:@"BakerIssueCoverReady"]) {
+        result = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK messageAsDictionary:[NSDictionary dictionaryWithObjectsAndKeys:[notification name],@"eventType", [notification object], @"data", nil]];
+    } else if ([[notification name] isEqualToString:@"BakerRefreshStateChanged"]) {
+        result = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK messageAsDictionary:[NSDictionary dictionaryWithObjectsAndKeys:[notification name],@"eventType", [notification object], @"data", nil]];
+    } else {
+        
+    }
+
+    
+    
+    [result setKeepCallbackAsBool:YES];
+    [self.commandDelegate sendPluginResult:result callbackId:self.eventHandlerCallbackId];
+    
+    
+}
+
+- (void)stopEventHandler:(CDVInvokedUrlCommand*)command
+{
+    // callback one last time to clear the callback function on JS side
+    if (self.eventHandlerCallbackId) {
+        CDVPluginResult* result = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK messageAsString:@"clear"];
+        [result setKeepCallbackAsBool:NO];
+        [self.commandDelegate sendPluginResult:result callbackId:self.eventHandlerCallbackId];
+    }
+    self.eventHandlerCallbackId = nil;
+    for (NSString *eventName in [Baker eventsType]) {
+        [[NSNotificationCenter defaultCenter] removeObserver:self
+                                                     name:eventName
+                                                   object:nil];
+    }
+}
 
 - (void)restore: (CDVInvokedUrlCommand*)command
 {
@@ -57,7 +133,7 @@
 {
     NSMutableArray *data = [[NSMutableArray alloc] init];
     for (BakerIssue *issue in [self.shelfController issues]) {
-        [data addObject:[self issueToDictionnary:issue]];
+        [data addObject:[Baker issueToDictionnary:issue]];
     }
 
     CDVPluginResult *pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK messageAsArray:data];
@@ -170,15 +246,20 @@
     return currentBook;
 }
 
-- (NSDictionary *)issueToDictionnary:(BakerIssue *)issue
++ (NSDictionary *)issueToDictionnary:(BakerIssue *)issue
 {
-    return [NSDictionary dictionaryWithObjectsAndKeys:issue.ID,@"ID",issue.title,@"title",issue.info,@"info",issue.date,@"date", issue.getStatus, @"status", [issue.url absoluteString], @"url", issue.path, @"path", issue.productID, @"productID", issue.price, @"price",[issue.coverURL absoluteString], @"coverURL", issue.coverPath, @"coverPath", nil];
+    NSString *coverPath = issue.coverPath;
+    if (![[NSFileManager defaultManager] fileExistsAtPath:coverPath]) {
+        coverPath = nil;
+    }
+
+    return [NSDictionary dictionaryWithObjectsAndKeys:issue.ID,@"ID",issue.title,@"title",issue.info,@"info",issue.date,@"date", issue.getStatus, @"status", [issue.url absoluteString], @"url", issue.path, @"path", issue.productID, @"productID", issue.price, @"price",[issue.coverURL absoluteString], @"coverURL", coverPath, @"coverPath", nil];
 }
 
 
 - (void)applicationWillHandleNewsstandNotificationOfContent:(NSString *)contentName
 {
-	NSLog(@"will handle newsstand notifications");
+    NSLog(@"will handle newsstand notifications");
     #ifdef BAKER_NEWSSTAND
     IssuesManager *issuesManager = [IssuesManager sharedInstance];
     PurchasesManager *purchasesManager = [PurchasesManager sharedInstance];
@@ -215,9 +296,9 @@
 
 - (void)createNotificationChecker:(NSNotification *)notification
 {
-	NSLog(@"create notification checker");
-	// Check if the app is runnig in response to a notification
-		NSDictionary *launchOptions = [notification userInfo] ;
+    NSLog(@"create notification checker");
+    // Check if the app is runnig in response to a notification
+        NSDictionary *launchOptions = [notification userInfo] ;
     NSDictionary *payload = [launchOptions objectForKey:UIApplicationLaunchOptionsRemoteNotificationKey];
     if (payload) {
         NSDictionary *aps = [payload objectForKey:@"aps"];
@@ -265,7 +346,7 @@
 
 - (void)didFailToRegisterForRemoteNotificationsWithError:(NSError*)error
 {
-	NSLog(@"[AppDelegate] Push Notification - Device Token, review: %@", error);
+    NSLog(@"[AppDelegate] Push Notification - Device Token, review: %@", error);
 }
 
 - (void)didReceiveRemoteNotification:(NSDictionary *)userInfo
@@ -280,7 +361,7 @@
 
 - (void)applicationDidBecomeActive:(UIApplication *)application
 {
-	// Restart any tasks that were paused (or not yet started) while the application was inactive. If the application was previously in the background, optionally refresh the user interface.
+    // Restart any tasks that were paused (or not yet started) while the application was inactive. If the application was previously in the background, optionally refresh the user interface.
 
   #ifdef BAKER_NEWSSTAND
   // Opening the application means all new items can be considered as "seen".
@@ -292,7 +373,7 @@
 
 - (void)applicationDidEnterBackground:(UIApplication *)application
 {
-	// Use this method to release shared resources, save user data, invalidate timers, and store enough application state information to restore your application to its current state in case it is terminated later.
+    // Use this method to release shared resources, save user data, invalidate timers, and store enough application state information to restore your application to its current state in case it is terminated later.
   // If your application supports background execution, this method is called instead of applicationWillTerminate: when the user quits.
 
   #ifdef BAKER_NEWSSTAND

@@ -31,7 +31,7 @@
 //
 
 #import <QuartzCore/QuartzCore.h>
-
+#import "Baker.h"
 #import "IssueController.h"
 #import "SSZipArchive.h"
 #import "BakerLocalizedString.h"
@@ -67,19 +67,19 @@
     if (self) {
         self.issue = bakerIssue;
         self.currentStatus = nil;
-
+        
         purchaseDelayed = NO;
-
-        #ifdef BAKER_NEWSSTAND
+        
+#ifdef BAKER_NEWSSTAND
         purchasesManager = [PurchasesManager sharedInstance];
         [self addPurchaseObserver:@selector(handleIssueRestored:) name:@"notification_issue_restored"];
-
+        
         [self addIssueObserver:@selector(handleDownloadStarted:) name:self.issue.notificationDownloadStartedName];
         [self addIssueObserver:@selector(handleDownloadProgressing:) name:self.issue.notificationDownloadProgressingName];
         [self addIssueObserver:@selector(handleDownloadFinished:) name:self.issue.notificationDownloadFinishedName];
         [self addIssueObserver:@selector(handleDownloadError:) name:self.issue.notificationDownloadErrorName];
         [self addIssueObserver:@selector(handleUnzipError:) name:self.issue.notificationUnzipErrorName];
-
+        
         NKLibrary *nkLib = [NKLibrary sharedLibrary];
         for (NKAssetDownload *asset in [nkLib downloadingAssets]) {
             if ([asset.issue.name isEqualToString:self.issue.ID]) {
@@ -87,8 +87,8 @@
                 [self.issue downloadWithAsset:asset];
             }
         }
-
-        #endif
+        
+#endif
     }
     return self;
 }
@@ -110,7 +110,7 @@
     [titleLabel release];
     [infoLabel release];
     [currentStatus release];
-
+    
     [super dealloc];
 }
 
@@ -120,20 +120,20 @@
 {
     NSString *status = [self.issue getStatus];
     if ([status isEqualToString:@"remote"] || [status isEqualToString:@"purchased"]) {
-    #ifdef BAKER_NEWSSTAND
+#ifdef BAKER_NEWSSTAND
         [[NSNotificationCenter defaultCenter] postNotificationName:@"BakerIssueDownload" object:self]; // -> Baker Analytics Event
         [self download];
-    #endif
+#endif
     } else if ([status isEqualToString:@"downloaded"] || [status isEqualToString:@"bundled"]) {
         [[NSNotificationCenter defaultCenter] postNotificationName:@"BakerIssueOpen" object:self]; // -> Baker Analytics Event
         [self read];
     } else if ([status isEqualToString:@"downloading"]) {
         // TODO: assuming it is supported by NewsstandKit, implement a "Cancel" operation
     } else if ([status isEqualToString:@"purchasable"]) {
-    #ifdef BAKER_NEWSSTAND
+#ifdef BAKER_NEWSSTAND
         [[NSNotificationCenter defaultCenter] postNotificationName:@"BakerIssuePurchase" object:self]; // -> Baker Analytics Event
         [self buy];
-    #endif
+#endif
     }
 }
 #ifdef BAKER_NEWSSTAND
@@ -143,16 +143,16 @@
 - (void)buy {
     [self addPurchaseObserver:@selector(handleIssuePurchased:) name:@"notification_issue_purchased"];
     [self addPurchaseObserver:@selector(handleIssuePurchaseFailed:) name:@"notification_issue_purchase_failed"];
-
+    
     if (![purchasesManager purchase:self.issue.productID]) {
         // Still retrieving SKProduct: delay purchase
         purchaseDelayed = YES;
-
+        
         [self removePurchaseObserver:@"notification_issue_purchased"];
         [self removePurchaseObserver:@"notification_issue_purchase_failed"];
-
+        
         [purchasesManager retrievePriceFor:self.issue.productID];
-
+        
         self.issue.transientStatus = BakerIssueTransientStatusUnpriced;
         [self refresh];
     } else {
@@ -162,14 +162,14 @@
 }
 - (void)handleIssuePurchased:(NSNotification *)notification {
     SKPaymentTransaction *transaction = [notification.userInfo objectForKey:@"transaction"];
-
+    
     if ([transaction.payment.productIdentifier isEqualToString:issue.productID]) {
-
+        
         [self removePurchaseObserver:@"notification_issue_purchased"];
         [self removePurchaseObserver:@"notification_issue_purchase_failed"];
-
+        
         [purchasesManager markAsPurchased:transaction.payment.productIdentifier];
-
+        
         if ([purchasesManager finishTransaction:transaction]) {
             if (!transaction.originalTransaction) {
                 // Do not show alert on restoring a transaction
@@ -182,9 +182,9 @@
                               message:[[BakerLocalizedString sharedInstance] NSLocalizedString:@"TRANSACTION_RECORDING_FAILED_MESSAGE"]
                           buttonTitle:[[BakerLocalizedString sharedInstance] NSLocalizedString:@"TRANSACTION_RECORDING_FAILED_CLOSE"]];
         }
-
+        
         self.issue.transientStatus = BakerIssueTransientStatusNone;
-
+        
         [purchasesManager retrievePurchasesFor:[NSSet setWithObject:self.issue.productID] withCallback:^(NSDictionary *purchases) {
             [self refresh];
         }];
@@ -192,7 +192,7 @@
 }
 - (void)handleIssuePurchaseFailed:(NSNotification *)notification {
     SKPaymentTransaction *transaction = [notification.userInfo objectForKey:@"transaction"];
-
+    
     if ([transaction.payment.productIdentifier isEqualToString:issue.productID]) {
         // Show an error, unless it was the user who cancelled the transaction
         if (transaction.error.code != SKErrorPaymentCancelled) {
@@ -200,10 +200,10 @@
                               message:[transaction.error localizedDescription]
                           buttonTitle:[[BakerLocalizedString sharedInstance] NSLocalizedString:@"ISSUE_PURCHASE_FAILED_CLOSE"]];
         }
-
+        
         [self removePurchaseObserver:@"notification_issue_purchased"];
         [self removePurchaseObserver:@"notification_issue_purchase_failed"];
-
+        
         self.issue.transientStatus = BakerIssueTransientStatusNone;
         [self refresh];
     }
@@ -211,14 +211,14 @@
 
 - (void)handleIssueRestored:(NSNotification *)notification {
     SKPaymentTransaction *transaction = [notification.userInfo objectForKey:@"transaction"];
-
+    
     if ([transaction.payment.productIdentifier isEqualToString:issue.productID]) {
         [purchasesManager markAsPurchased:transaction.payment.productIdentifier];
-
+        
         if (![purchasesManager finishTransaction:transaction]) {
             NSLog(@"[BakerShelf] Could not confirm purchase restore with remote server for %@", transaction.payment.productIdentifier);
         }
-
+        
         self.issue.transientStatus = BakerIssueTransientStatusNone;
         [self refresh];
     }
@@ -249,12 +249,13 @@
 - (void)handleDownloadProgressing:(NSNotification *)notification {
     float bytesWritten = [[notification.userInfo objectForKey:@"totalBytesWritten"] floatValue];
     float bytesExpected = [[notification.userInfo objectForKey:@"expectedTotalBytes"] floatValue];
-
+    float progress = (bytesWritten / bytesExpected);
+    
     if ([self.currentStatus isEqualToString:@"connecting"]) {
         self.issue.transientStatus = BakerIssueTransientStatusDownloading;
         [self refresh];
     }
-    [self.progressBar setProgress:(bytesWritten / bytesExpected) animated:YES];
+    [[NSNotificationCenter defaultCenter] postNotificationName:@"BakerIssueDownloadProgress" object:[NSDictionary dictionaryWithObjectsAndKeys:[Baker issueToDictionnary:self.issue], @"issue", [NSNumber numberWithFloat:bytesWritten], @"written", [NSNumber numberWithFloat:bytesExpected], @"total", [NSNumber numberWithFloat:progress], @"progress", nil]];
 }
 - (void)handleDownloadFinished:(NSNotification *)notification {
     self.issue.transientStatus = BakerIssueTransientStatusNone;
@@ -264,7 +265,7 @@
     [Utils showAlertWithTitle:[[BakerLocalizedString sharedInstance] NSLocalizedString:@"DOWNLOAD_FAILED_TITLE"]
                       message:[[BakerLocalizedString sharedInstance] NSLocalizedString:@"DOWNLOAD_FAILED_MESSAGE"]
                   buttonTitle:[[BakerLocalizedString sharedInstance] NSLocalizedString:@"DOWNLOAD_FAILED_CLOSE"]];
-
+    
     self.issue.transientStatus = BakerIssueTransientStatusNone;
     [self refresh];
 }
@@ -272,7 +273,7 @@
     [Utils showAlertWithTitle:[[BakerLocalizedString sharedInstance] NSLocalizedString:@"UNZIP_FAILED_TITLE"]
                       message:[[BakerLocalizedString sharedInstance] NSLocalizedString:@"UNZIP_FAILED_MESSAGE" ]
                   buttonTitle:[[BakerLocalizedString sharedInstance] NSLocalizedString:@"UNZIP_FAILED_CLOSE" ]];
-
+    
     self.issue.transientStatus = BakerIssueTransientStatusNone;
     [self refresh];
 }
@@ -301,12 +302,12 @@
         NKIssue *nkIssue = [nkLib issueWithName:self.issue.ID];
         NSString *name = nkIssue.name;
         NSDate *date = nkIssue.date;
-
+        
         [nkLib removeIssue:nkIssue];
-
+        
         nkIssue = [nkLib addIssueWithName:name date:date];
         self.issue.path = [[nkIssue contentURL] path];
-
+        
         [self refresh];
     }
 }
@@ -315,29 +316,29 @@
 #pragma mark - Helper methods
 
 - (void)addPurchaseObserver:(SEL)notificationSelector name:(NSString *)notificationName {
-    #ifdef BAKER_NEWSSTAND
+#ifdef BAKER_NEWSSTAND
     [[NSNotificationCenter defaultCenter] addObserver:self
                                              selector:notificationSelector
                                                  name:notificationName
                                                object:purchasesManager];
-    #endif
+#endif
 }
 
 - (void)removePurchaseObserver:(NSString *)notificationName {
-    #ifdef BAKER_NEWSSTAND
+#ifdef BAKER_NEWSSTAND
     [[NSNotificationCenter defaultCenter] removeObserver:self
                                                     name:notificationName
                                                   object:purchasesManager];
-    #endif
+#endif
 }
 
 - (void)addIssueObserver:(SEL)notificationSelector name:(NSString *)notificationName {
-    #ifdef BAKER_NEWSSTAND
+#ifdef BAKER_NEWSSTAND
     [[NSNotificationCenter defaultCenter] addObserver:self
                                              selector:notificationSelector
                                                  name:notificationName
                                                object:nil];
-    #endif
+#endif
 }
 
 - (void)refresh
@@ -345,21 +346,78 @@
     [self refresh:[self.issue getStatus]];
 }
 
++ (UIImage *)imageWithImage:(UIImage *)image scaledToSize:(CGSize)size {
+    if ([[UIScreen mainScreen] respondsToSelector:@selector(scale)]) {
+        UIGraphicsBeginImageContextWithOptions(size, NO, [[UIScreen mainScreen] scale]);
+    } else {
+        UIGraphicsBeginImageContext(size);
+    }
+    [image drawInRect:CGRectMake(0, 0, size.width, size.height)];
+    UIImage *newImage = UIGraphicsGetImageFromCurrentImageContext();
+    UIGraphicsEndImageContext();
+    
+    return newImage;
+}
+
++ (UIImage *)imageWithImage:(UIImage *)image scaledToMaxWidth:(CGFloat)width maxHeight:(CGFloat)height {
+    CGFloat oldWidth = image.size.width;
+    CGFloat oldHeight = image.size.height;
+    
+    CGFloat scaleFactor = (oldWidth > oldHeight) ? width / oldWidth : height / oldHeight;
+    
+    CGFloat newHeight = oldHeight * scaleFactor;
+    CGFloat newWidth = oldWidth * scaleFactor;
+    CGSize newSize = CGSizeMake(newWidth, newHeight);
+    
+    return [self imageWithImage:image scaledToSize:newSize];
+}
+
 - (void)refresh:(NSString *)status
 {
     //XXX please improve
     //Need that call to cache covers
-    [self.issue getCoverWithCache:TRUE andBlock:^(UIImage *image) {
-        //Nothing to do here
-    }];
+    //Call it only the very first time
+    if (currentStatus == nil) {
+        [self.issue getCoverWithCache:TRUE andBlock:^(UIImage *image) {
+            UIImage *newImage = nil;
+            NSData *data = nil;
+            NSString *destinationPath = nil;
+            
+            destinationPath = [self.issue.coverPath stringByAppendingString:@"-large.png"];
+            if (![[NSFileManager defaultManager] fileExistsAtPath:destinationPath]) {
+                newImage = [IssueController imageWithImage:image scaledToMaxWidth:1024 maxHeight:1024];
+                data = UIImagePNGRepresentation(newImage);
+                [data writeToFile:destinationPath atomically:YES];
+            }
+            
+            destinationPath = [self.issue.coverPath stringByAppendingString:@"-medium.png"];
+            if (![[NSFileManager defaultManager] fileExistsAtPath:destinationPath]) {
+                newImage = [IssueController imageWithImage:image scaledToMaxWidth:512 maxHeight:512];
+                data = UIImagePNGRepresentation(newImage);
+                [data writeToFile:destinationPath atomically:YES];
+            }
+            
+            destinationPath = [self.issue.coverPath stringByAppendingString:@"-small.png"];
+            if (![[NSFileManager defaultManager] fileExistsAtPath:destinationPath]) {
+                newImage = [IssueController imageWithImage:image scaledToMaxWidth:250 maxHeight:250];
+                data = UIImagePNGRepresentation(newImage);
+                [data writeToFile:destinationPath atomically:YES];
+            }
+            
+            [[NSNotificationCenter defaultCenter] postNotificationName:@"BakerIssueCoverReady" object:[NSDictionary dictionaryWithObjectsAndKeys: [Baker issueToDictionnary:self.issue], @"issue", nil]];
+        }];
+    }
     NSLog(@"[BakerShelf] Shelf UI - Refreshing %@ item with status from <%@> to <%@>", self.issue.ID, self.currentStatus, status);
+    [[NSNotificationCenter defaultCenter] postNotificationName:@"BakerIssueStateChanged" object:[NSDictionary dictionaryWithObjectsAndKeys:[Baker issueToDictionnary:self.issue],@"issue", nil]];
+    
+    
     if ([status isEqualToString:@"remote"])
     {
         // [self.priceLabel setText:NSLocalizedString(@"FREE_TEXT", nil)];
-
+        
         // [self.actionButton setTitle:NSLocalizedString(@"ACTION_REMOTE_TEXT", nil) forState:UIControlStateNormal];
         // [self.spinner stopAnimating];
-
+        
         // self.actionButton.hidden = NO;
         // self.archiveButton.hidden = YES;
         // self.progressBar.hidden = YES;
@@ -370,7 +428,7 @@
     {
         NSLog(@"[BakerShelf] '%@' is Connecting...", self.issue.ID);
         // [self.spinner startAnimating];
-
+        
         // self.actionButton.hidden = YES;
         // self.archiveButton.hidden = YES;
         // self.progressBar.progress = 0;
@@ -378,12 +436,13 @@
         // self.loadingLabel.hidden = NO;
         // self.progressBar.hidden = YES;
         // self.priceLabel.hidden = YES;
+        
     }
     else if ([status isEqualToString:@"downloading"])
     {
         NSLog(@"[BakerShelf] '%@' is Downloading...", self.issue.ID);
         // [self.spinner startAnimating];
-
+        
         // self.actionButton.hidden = YES;
         // self.archiveButton.hidden = YES;
         // self.progressBar.progress = 0;
@@ -397,7 +456,7 @@
         NSLog(@"[BakerShelf] '%@' is Ready to be Read.", self.issue.ID);
         // [self.actionButton setTitle:NSLocalizedString(@"ACTION_DOWNLOADED_TEXT", nil) forState:UIControlStateNormal];
         // [self.spinner stopAnimating];
-
+        
         // self.actionButton.hidden = NO;
         // self.archiveButton.hidden = NO;
         // self.loadingLabel.hidden = YES;
@@ -408,7 +467,7 @@
     {
         // [self.actionButton setTitle:NSLocalizedString(@"ACTION_DOWNLOADED_TEXT", nil) forState:UIControlStateNormal];
         // [self.spinner stopAnimating];
-
+        
         // self.actionButton.hidden = NO;
         // self.archiveButton.hidden = YES;
         // self.loadingLabel.hidden = YES;
@@ -418,7 +477,7 @@
     else if ([status isEqualToString:@"opening"])
     {
         // [self.spinner startAnimating];
-
+        
         // self.actionButton.hidden = YES;
         // self.archiveButton.hidden = YES;
         // self.loadingLabel.text = NSLocalizedString(@"OPENING_TEXT", nil);
@@ -431,11 +490,11 @@
         NSLog(@"[BakerShelf] '%@' is Purchasable... %@", self.issue.ID, self.issue.price);
         // [self.actionButton setTitle:NSLocalizedString(@"ACTION_BUY_TEXT", nil) forState:UIControlStateNormal];
         // [self.spinner stopAnimating];
-
+        
         // if (self.issue.price) {
         //     [self.priceLabel setText:self.issue.price];
         // }
-
+        
         // self.actionButton.hidden = NO;
         // self.archiveButton.hidden = YES;
         // self.progressBar.hidden = YES;
@@ -446,9 +505,9 @@
     {
         NSLog(@"[BakerShelf] '%@' is being Purchased...", self.issue.ID);
         // [self.spinner startAnimating];
-
+        
         // self.loadingLabel.text = NSLocalizedString(@"BUYING_TEXT", nil);
-
+        
         // self.actionButton.hidden = YES;
         // self.archiveButton.hidden = YES;
         // self.progressBar.hidden = YES;
@@ -459,10 +518,10 @@
     {
         NSLog(@"[BakerShelf] '%@' is Purchased.", self.issue.ID);
         // [self.priceLabel setText:NSLocalizedString(@"PURCHASED_TEXT", nil)];
-
+        
         // [self.actionButton setTitle:NSLocalizedString(@"ACTION_REMOTE_TEXT", nil) forState:UIControlStateNormal];
         // [self.spinner stopAnimating];
-
+        
         // self.actionButton.hidden = NO;
         // self.archiveButton.hidden = YES;
         // self.progressBar.hidden = YES;
@@ -472,17 +531,17 @@
     else if ([status isEqualToString:@"unpriced"])
     {
         // [self.spinner startAnimating];
-
+        
         // self.loadingLabel.text = NSLocalizedString(@"RETRIEVING_TEXT", nil);
-
+        
         // self.actionButton.hidden = YES;
         // self.archiveButton.hidden = YES;
         // self.progressBar.hidden = YES;
         // self.loadingLabel.hidden = NO;
         // self.priceLabel.hidden = YES;
     }
-
-
+    
+    
     self.currentStatus = status;
 }
 

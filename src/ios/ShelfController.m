@@ -450,6 +450,7 @@
 
 -(void)setrefreshButtonEnabled:(BOOL)enabled {
     NSLog(@"Refresh mode enabled %i", enabled);
+    [[NSNotificationCenter defaultCenter] postNotificationName:@"BakerRefreshStateChanged" object:[NSDictionary dictionaryWithObjectsAndKeys:[NSNumber numberWithBool:enabled], @"state", nil]];
 }
 
 -(void)setSubscribeButtonEnabled:(BOOL)enabled {

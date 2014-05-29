@@ -5,11 +5,14 @@
 
 @interface Baker : CDVPlugin
 {
-	NSDictionary *notificationMessage;
+	  NSDictionary *notificationMessage;
+    NSString* eventHandlerCallbackId;
 }
 
 @property (nonatomic, strong) NSDictionary *notificationMessage;
 @property (strong, nonatomic) ShelfController *shelfController;
+@property (strong) NSString* eventHandlerCallbackId;
+
 
 - (void)applicationWillHandleNewsstandNotificationOfContent:(NSString *)contentName;
 - (void)didRegisterForRemoteNotificationsWithDeviceToken:(NSData *)deviceToken;
@@ -19,6 +22,6 @@
 - (void)applicationDidEnterBackground:(UIApplication *)application;
 - (void)applicationWillResignActive:(UIApplication *)application;
 - (void)createNotificationChecker:(NSNotification *)notification;
-
-
+- (void)handleReceiveEvent:(NSNotification *)notification;
++ (NSDictionary *)issueToDictionnary:(BakerIssue *)issue;
 @end
