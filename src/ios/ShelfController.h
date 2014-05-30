@@ -37,6 +37,7 @@
 #import "IssuesManager.h"
 #import "ShelfStatus.h"
 #import "BakerAPI.h"
+#import "IssueController.h"
 #ifdef BAKER_NEWSSTAND
 #import "PurchasesManager.h"
 #endif
@@ -85,6 +86,7 @@
 - (void)handleReadIssue:(NSNotification *)notification;
 - (void)receiveBookProtocolNotification:(NSNotification *)notification;
 - (void)handleBookToBeProcessed;
+- (IssueController *)issueViewControllerWithID:(NSString *)ID;
 
 
 @end

@@ -7,6 +7,8 @@
 
 NSString * const kBakerEventsType[] = {
     @"BakerApplicationReady",
+    @"BakerIssueDeleted",
+    @"BakerIssueAdded",
     @"BakerIssueStateChanged",
     @"BakerIssueDownloadProgress",
     @"BakerIssueCoverReady",
@@ -52,7 +54,7 @@ NSString * const kBakerEventsType[] = {
     static NSArray *events;
     static dispatch_once_t onceToken;
     dispatch_once(&onceToken, ^{
-        events = [NSArray arrayWithObjects:kBakerEventsType count:5];
+        events = [NSArray arrayWithObjects:kBakerEventsType count:7];
     });
     
     return events;
@@ -76,7 +78,7 @@ NSString * const kBakerEventsType[] = {
     }
     
     CDVPluginResult* result = nil;
-    NSLog(@"[Baker Event] received event %@", [notification name]);
+    // NSLog(@"[Baker Event] received event %@", [notification name]);
     if ([[notification name] isEqualToString:@"BakerApplicationReady"]) {
         result = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK messageAsDictionary:[NSDictionary dictionaryWithObjectsAndKeys:[notification name],@"eventType", [notification object], @"data", nil]];
     } else if ([[notification name] isEqualToString:@"BakerIssueStateChanged"]) {
@@ -87,15 +89,19 @@ NSString * const kBakerEventsType[] = {
         result = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK messageAsDictionary:[NSDictionary dictionaryWithObjectsAndKeys:[notification name],@"eventType", [notification object], @"data", nil]];
     } else if ([[notification name] isEqualToString:@"BakerRefreshStateChanged"]) {
         result = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK messageAsDictionary:[NSDictionary dictionaryWithObjectsAndKeys:[notification name],@"eventType", [notification object], @"data", nil]];
+    } else if ([[notification name] isEqualToString:@"BakerIssueAdded"]) {
+        result = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK messageAsDictionary:[NSDictionary dictionaryWithObjectsAndKeys:[notification name],@"eventType", [notification object], @"data", nil]];
+    } else if ([[notification name] isEqualToString:@"BakerIssueDeleted"]) {
+        result = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK messageAsDictionary:[NSDictionary dictionaryWithObjectsAndKeys:[notification name],@"eventType", [notification object], @"data", nil]];
     } else {
         
     }
 
     
-    
-    [result setKeepCallbackAsBool:YES];
-    [self.commandDelegate sendPluginResult:result callbackId:self.eventHandlerCallbackId];
-    
+    if (result) {
+        [result setKeepCallbackAsBool:YES];
+        [self.commandDelegate sendPluginResult:result callbackId:self.eventHandlerCallbackId];
+    }
     
 }
 

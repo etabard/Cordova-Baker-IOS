@@ -38,6 +38,7 @@
 #import "NSString+Extensions.h"
 #import "BakerLocalizedString.h"
 #import "Utils.h"
+#import "Baker.h"
 
 @implementation ShelfController
 
@@ -172,6 +173,7 @@
                     
                     if (![self bakerIssueWithID:ivc.issue.ID]) {
                         [discardedControllers addObject:ivc];
+                        [[NSNotificationCenter defaultCenter] postNotificationName:@"BakerIssueDeleted" object:[NSDictionary dictionaryWithObjectsAndKeys:[Baker issueToDictionnary:ivc.issue],@"issue", nil]];
                     }
                 }];
                 [self.issueViewControllers removeObjectsInArray:discardedControllers];
@@ -184,10 +186,12 @@
                     IssueController *existingIvc = [self issueViewControllerWithID:issue.ID];
                     
                     if (existingIvc) {
+                        NSLog(@"existing issue controller %@", issue.ID);
                         existingIvc.issue = issue;
                     } else {
                         IssueController *newIvc = [self createIssueViewControllerWithIssue:issue];
                         [self.issueViewControllers insertObject:newIvc atIndex:idx];
+                        [[NSNotificationCenter defaultCenter] postNotificationName:@"BakerIssueAdded" object:[NSDictionary dictionaryWithObjectsAndKeys:[Baker issueToDictionnary:newIvc.issue],@"issue", [NSNumber numberWithLong:idx],@"index", nil]];
                     }
                 }];
                 

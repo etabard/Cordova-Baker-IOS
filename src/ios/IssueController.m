@@ -99,6 +99,12 @@
 
 - (void)dealloc
 {
+    [self removeIssueObserver:self.issue.notificationDownloadStartedName];
+    [self removeIssueObserver:self.issue.notificationDownloadProgressingName];
+    [self removeIssueObserver:self.issue.notificationDownloadFinishedName];
+    [self removeIssueObserver:self.issue.notificationDownloadErrorName];
+    [self removeIssueObserver:self.issue.notificationUnzipErrorName];
+    
     [issue release];
     [actionButton release];
     [archiveButton release];
@@ -337,6 +343,14 @@
     [[NSNotificationCenter defaultCenter] addObserver:self
                                              selector:notificationSelector
                                                  name:notificationName
+                                               object:nil];
+#endif
+}
+
+- (void)removeIssueObserver:(NSString *)notificationName {
+#ifdef BAKER_NEWSSTAND
+    [[NSNotificationCenter defaultCenter] removeObserver:self
+                                             name:notificationName
                                                object:nil];
 #endif
 }

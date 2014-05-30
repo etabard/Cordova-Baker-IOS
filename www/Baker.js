@@ -93,22 +93,20 @@
             if (BakerInstance.ready && e.data.issue && book) {
                 bookChanged = book.update(e.data.issue);
                 eventData = book;
-            } else if (BakerInstance.ready && e.data.issue && !book) {
+            } else if (BakerInstance.ready && e.data.issue && !book && e.eventType != 'BakerIssueAdded') {
                 return;
             }
 
             switch(e.eventType) {
-                case "BakerRefreshStateChanged":
+                case 'BakerRefreshStateChanged':
                     if (!BakerInstance.ready && e.data.state === true) {
                         //First refresh ended
                         prepareBaker();
-                        fireEvent = false;
                     } else if (!BakerInstance.ready && e.data.state === false) {
                         //First refresh is starting do nothing
-                        fireEvent = false;
                     }
                 break;
-                case "BakerIssueStateChanged":
+                case 'BakerIssueStateChanged':
                     if (!bookChanged) {
                         fireEvent = false;
                     }
@@ -117,14 +115,42 @@
                         book.downloading = false;
                     }
                 break;
-                case "BakerIssueCoverReady":
+                case 'BakerIssueAdded':
+                    if (BakerInstance.ready) {
+                        var newIssue = new BakerIssue(e.data.issue);
+                        BakerInstance.issues.splice(e.data.index, 0, newIssue);
+                        eventData = {
+                            'index': e.data.index,
+                            'issue': newIssue
+                        }
+                    } else {
+                        fireEvent = false;
+                    }
+                break;
+                case 'BakerIssueDeleted':
+                    if (BakerInstance.ready) {
+                        var index = BakerInstance.issues.indexOf(book);
+                        BakerInstance.issues.slice(index);
+                        eventData = {
+                            'index': index,
+                            'issue': book
+                        }
+                    } else {
+                        fireEvent = false;
+                    }
+                break;
+                case 'BakerIssueCoverReady':
                     //Nothing more to do
                 break;
-                case "BakerIssueDownloadProgress":
+                case 'BakerIssueDownloadProgress':
                     //Nothing more to do
-                    
+                    var progress = Math.round(e.data.progress * 100);
+
+                    if (book.downloading && book.downloading.progress == progress) {
+                        fireEvent = false;
+                    }
                     book.downloading = {
-                        progress: Math.round(e.data.progress * 100),
+                        progress: progress,
                         total: e.data.total,
                         written: e.data.written
                     };
