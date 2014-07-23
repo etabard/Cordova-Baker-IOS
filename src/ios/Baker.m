@@ -13,6 +13,7 @@ NSString * const kBakerEventsType[] = {
     @"BakerIssueDownloadProgress",
     @"BakerIssueCoverReady",
     @"BakerRefreshStateChanged",
+    @"BakerSubscriptionStateChanged",
 };
 
 @implementation Baker
@@ -54,7 +55,7 @@ NSString * const kBakerEventsType[] = {
     static NSArray *events;
     static dispatch_once_t onceToken;
     dispatch_once(&onceToken, ^{
-        events = [NSArray arrayWithObjects:kBakerEventsType count:7];
+        events = [NSArray arrayWithObjects:kBakerEventsType count:8];
     });
     
     return events;
@@ -89,6 +90,8 @@ NSString * const kBakerEventsType[] = {
         result = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK messageAsDictionary:[NSDictionary dictionaryWithObjectsAndKeys:[notification name],@"eventType", [notification object], @"data", nil]];
     } else if ([[notification name] isEqualToString:@"BakerRefreshStateChanged"]) {
         result = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK messageAsDictionary:[NSDictionary dictionaryWithObjectsAndKeys:[notification name],@"eventType", [notification object], @"data", nil]];
+    } else if ([[notification name] isEqualToString:@"BakerSubscriptionStateChanged"]) {
+        result = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK messageAsDictionary:[NSDictionary dictionaryWithObjectsAndKeys:[notification name],@"eventType", [notification object], @"data", nil]];
     } else if ([[notification name] isEqualToString:@"BakerIssueAdded"]) {
         result = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK messageAsDictionary:[NSDictionary dictionaryWithObjectsAndKeys:[notification name],@"eventType", [notification object], @"data", nil]];
     } else if ([[notification name] isEqualToString:@"BakerIssueDeleted"]) {
@@ -121,6 +124,24 @@ NSString * const kBakerEventsType[] = {
     }
 }
 
+
+
+- (void)subscribe: (CDVInvokedUrlCommand *)command
+{
+    CDVPluginResult *pluginResult = nil;
+    NSString* productId = [command.arguments objectAtIndex:0];
+    
+    if ([shelfController subscribe:productId]) {
+        pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK messageAsString:@"OK"];
+    } else {
+        pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_ERROR messageAsString:@"ERROR"];
+    }
+    
+    [self.commandDelegate sendPluginResult:pluginResult callbackId:command.callbackId];
+}
+
+
+
 - (void)restore: (CDVInvokedUrlCommand*)command
 {
     [[PurchasesManager sharedInstance] restore];
@@ -144,6 +165,23 @@ NSString * const kBakerEventsType[] = {
 
     CDVPluginResult *pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK messageAsArray:data];
 
+    [self.commandDelegate sendPluginResult:pluginResult callbackId:command.callbackId];
+}
+
+
+- (void)getSubscriptions: (CDVInvokedUrlCommand*)command
+{
+    NSMutableArray *data = [[NSMutableArray alloc] init];
+    
+    for (NSString *productId in AUTO_RENEWABLE_SUBSCRIPTION_PRODUCT_IDS) {
+        NSString *title = [[PurchasesManager sharedInstance] displayTitleFor:productId];
+        NSString *price = [[PurchasesManager sharedInstance] priceFor:productId];
+
+        [data addObject:[NSDictionary dictionaryWithObjectsAndKeys:productId,@"ID",title,@"title",price,@"price", nil]];
+    }
+    
+    CDVPluginResult *pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK messageAsArray:data];
+    
     [self.commandDelegate sendPluginResult:pluginResult callbackId:command.callbackId];
 }
 

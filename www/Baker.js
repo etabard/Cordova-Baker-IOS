@@ -10,11 +10,115 @@
     var Baker = (function () {
         this.issues = [];
         this.ready = false;
+        this.subscriptions = [];
+        this.hasSubscribed = false;
     });
 
 
     var noop = function () {};
     var log = noop;
+
+    var deferredEvents = [];
+
+    var eventHandler = function (e) {
+        var fireEvent = true;
+        var eventType = e.eventType;
+        var eventData = e.data;
+        var book;
+        var bookChanged = false;
+
+
+        if (BakerInstance.ready && e.data.issue) {
+            book = BakerInstance.getBookById(e.data.issue.ID);
+        }
+
+        if (BakerInstance.ready && e.data.issue && book) {
+            bookChanged = book.update(e.data.issue);
+            eventData = book;
+        } else if (BakerInstance.ready && e.data.issue && !book && e.eventType != 'BakerIssueAdded') {
+            return;
+        }
+        switch(e.eventType) {
+            case 'BakerRefreshStateChanged':
+                if (!BakerInstance.ready && e.data.state === true) {
+                    //First refresh ended
+                    prepareBaker();
+                } else if (!BakerInstance.ready && e.data.state === false) {
+                    //First refresh is starting do nothing
+                }
+            break;
+            case 'BakerSubscriptionStateChanged':
+                BakerInstance.hasSubscribed = e.data.state;
+            break;
+            case 'BakerIssueStateChanged':
+                if (BakerInstance.ready) {
+                    if (!bookChanged) {
+                        fireEvent = false;
+                    }
+
+                    if (book.status != 'downloading') {
+                        book.downloading = false;
+                    }
+                }
+            break;
+            case 'BakerIssueAdded':
+                if (BakerInstance.ready) {
+                    var newIssue = new BakerIssue(e.data.issue);
+                    BakerInstance.issues.splice(e.data.index, 0, newIssue);
+                    eventData = {
+                        'index': e.data.index,
+                        'issue': newIssue
+                    }
+                } else {
+                    fireEvent = false;
+                }
+            break;
+            case 'BakerIssueDeleted':
+                if (BakerInstance.ready) {
+                    var index = BakerInstance.issues.indexOf(book);
+                    BakerInstance.issues.slice(index);
+                    eventData = {
+                        'index': index,
+                        'issue': book
+                    }
+                } else {
+                    fireEvent = false;
+                }
+            break;
+            case 'BakerIssueCoverReady':
+                if (!BakerInstance.ready) {
+                    fireEvent = false;
+
+                    deferredEvents.push(e);
+                } else {
+                    book.coverReady = true;
+                }
+            break;
+            case 'BakerIssueDownloadProgress':
+                if (BakerInstance.ready) {
+                    var progress = Math.round(e.data.progress * 100);
+
+                    if (book.downloading && book.downloading.progress == progress) {
+                        fireEvent = false;
+                    }
+                    book.downloading = {
+                        progress: progress,
+                        total: e.data.total,
+                        written: e.data.written
+                    };
+                }
+            break;
+        }
+        if (fireEvent) {
+            fireDocumentEvent(eventType, eventData);
+        }
+
+        //Release data as we keep a reference
+        book = null;
+        eventType = null;
+        eventData = null;
+        e = null;
+    };
 
     function createEvent(type, data) {
         var event = document.createEvent('Events');
@@ -52,13 +156,21 @@
 
     var prepareBaker = function () {
         BakerInstance.getBooks(function () {
-            BakerInstance.ready = true;
-            fireDocumentEvent('BakerApplicationReady', BakerInstance);
+            BakerInstance.getSubscriptions(function () {
+                BakerInstance.ready = true;
+                fireDocumentEvent('BakerApplicationReady', BakerInstance);
+                deferredEvents.forEach(function(e) {
+                    eventHandler(e);
+                });
+            });
         });
     };
 
     Baker.prototype.init = function (options) {
         options = options || {};
+
+        
+
         if (options.debug) {
             // exec('debug', [], noop, noop);
             log = function (msg) {
@@ -78,94 +190,7 @@
         var eventProtectHandler = function (e) {
             protectCall(eventHandler, 'eventHandler', e);
         };
-        var eventHandler = function (e) {
-            var fireEvent = true;
-            var eventType = e.eventType;
-            var eventData = e.data;
-            var book;
-            var bookChanged = false;
-
-
-            if (BakerInstance.ready && e.data.issue) {
-                book = BakerInstance.getBookById(e.data.issue.ID);
-            }
-
-            if (BakerInstance.ready && e.data.issue && book) {
-                bookChanged = book.update(e.data.issue);
-                eventData = book;
-            } else if (BakerInstance.ready && e.data.issue && !book && e.eventType != 'BakerIssueAdded') {
-                return;
-            }
-
-            switch(e.eventType) {
-                case 'BakerRefreshStateChanged':
-                    if (!BakerInstance.ready && e.data.state === true) {
-                        //First refresh ended
-                        prepareBaker();
-                    } else if (!BakerInstance.ready && e.data.state === false) {
-                        //First refresh is starting do nothing
-                    }
-                break;
-                case 'BakerIssueStateChanged':
-                    if (!bookChanged) {
-                        fireEvent = false;
-                    }
-
-                    if (book.status != 'downloading') {
-                        book.downloading = false;
-                    }
-                break;
-                case 'BakerIssueAdded':
-                    if (BakerInstance.ready) {
-                        var newIssue = new BakerIssue(e.data.issue);
-                        BakerInstance.issues.splice(e.data.index, 0, newIssue);
-                        eventData = {
-                            'index': e.data.index,
-                            'issue': newIssue
-                        }
-                    } else {
-                        fireEvent = false;
-                    }
-                break;
-                case 'BakerIssueDeleted':
-                    if (BakerInstance.ready) {
-                        var index = BakerInstance.issues.indexOf(book);
-                        BakerInstance.issues.slice(index);
-                        eventData = {
-                            'index': index,
-                            'issue': book
-                        }
-                    } else {
-                        fireEvent = false;
-                    }
-                break;
-                case 'BakerIssueCoverReady':
-                    //Nothing more to do
-                break;
-                case 'BakerIssueDownloadProgress':
-                    //Nothing more to do
-                    var progress = Math.round(e.data.progress * 100);
-
-                    if (book.downloading && book.downloading.progress == progress) {
-                        fireEvent = false;
-                    }
-                    book.downloading = {
-                        progress: progress,
-                        total: e.data.total,
-                        written: e.data.written
-                    };
-                break;
-            }
-            if (fireEvent) {
-                fireDocumentEvent(eventType, eventData);
-            }
-
-            //Release data as we keep a reference
-            book = null;
-            eventType = null;
-            eventData = null;
-            e = null;
-        };
+        
         exec('startEventHandler', [], eventProtectHandler, noop);
 
 
@@ -261,15 +286,41 @@
         exec('getBookInfos', [BookId], getOk, getFailed);
     };
 
+    Baker.prototype.getSubscriptions = function(success, error) {
+        var getOk = function (infos) {
+            BakerInstance.subscriptions = infos;
+            protectCall(success, 'getSubscriptions::success', infos);
+        };
+        var getFailed = function () {
+            protectCall(error, 'getSubscriptions::error');
+        };
+        exec('getSubscriptions', [], getOk, getFailed);
+    };
+
+    Baker.prototype.getSubscriptionById = function (productId) {
+        return this.subscriptions.filter(function(sub) {
+            return (sub.ID == productId);
+        }).pop();
+    }
+
+    Baker.prototype.subscribe = function (productId) {
+        exec('subscribe', [productId], function() {}, function() {});
+    };
+
 
 
     var BakerIssue = (function (values) {
         this.downloading = false;
+        this.coverReady = false;
 
         if (values) {
             Object.keys(values).forEach(function(key) {
                 this[key] = values[key];
             }.bind(this));
+        }
+
+        if (!this.status) {
+            this.status = null;
         }
     });
 

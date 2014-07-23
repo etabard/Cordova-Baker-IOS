@@ -54,6 +54,8 @@
 }
 
 @property (copy, nonatomic) NSArray *issues;
+@property BOOL hasSubscribed;
+
 @property (copy, nonatomic) NSArray *supportedOrientation;
 
 @property (retain, nonatomic) NSMutableArray *issueViewControllers;
@@ -85,6 +87,7 @@
 - (void)readIssue:(BakerIssue *)issue;
 - (void)handleReadIssue:(NSNotification *)notification;
 - (void)receiveBookProtocolNotification:(NSNotification *)notification;
+- (BOOL)subscribe:(NSString *)productId;
 - (void)handleBookToBeProcessed;
 - (IssueController *)issueViewControllerWithID:(NSString *)ID;
 

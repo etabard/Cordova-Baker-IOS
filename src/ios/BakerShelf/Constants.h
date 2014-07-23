@@ -84,6 +84,7 @@
         //     nil]
         #define AUTO_RENEWABLE_SUBSCRIPTION_PRODUCT_IDS [NSArray arrayWithObjects: \
             @"com.lesfrancschatons.clients.jalou.Kiosk.6months", \
+            @"com.lesfrancschatons.clients.jalou.Kiosk.1year", \
             nil]
 
     #endif
