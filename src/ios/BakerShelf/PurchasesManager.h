@@ -63,6 +63,8 @@
 
 - (NSString *)priceFor:(NSString *)productID;
 
+- (NSString *)displayTitleFor:(NSString*)productID;
+
 #pragma mark - Purchases
 
 - (BOOL)purchase:(NSString *)productID;
