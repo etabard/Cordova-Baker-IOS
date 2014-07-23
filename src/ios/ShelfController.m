@@ -213,7 +213,7 @@
                     [(IssueController *)obj refresh];
                 }];
 
-                
+                [self refreshSubscribeState];
                 [self setrefreshStateEnabled:YES];
             }];
 
@@ -325,10 +325,10 @@
         [Utils showAlertWithTitle:[[BakerLocalizedString sharedInstance] NSLocalizedString:@"SUBSCRIPTION_FAILED_TITLE"]
                                   message:nil
                                                                                        buttonTitle:[[BakerLocalizedString sharedInstance] NSLocalizedString:@"SUBSCRIPTION_FAILED_CLOSE"]];
-        [self setSubscribeStateEnabled:NO];
+        [self refreshSubscribeState];
         return false;
     } else {
-        [self setSubscribeStateEnabled:YES];
+        [self refreshSubscribeState];
         return true;
     }
 
@@ -406,8 +406,7 @@
                           message:[transaction.error localizedDescription]
                       buttonTitle:[[BakerLocalizedString sharedInstance] NSLocalizedString:@"SUBSCRIPTION_FAILED_CLOSE"]];
     }
-    NSLog(@"Enable subscription mode");
-    [self setSubscribeStateEnabled:NO];
+    [self refreshSubscribeState];
 }
 
 - (void)handleSubscriptionRestored:(NSNotification *)notification {
@@ -418,7 +417,7 @@
     if (![purchasesManager finishTransaction:transaction]) {
         NSLog(@"Could not confirm purchase restore with remote server for %@", transaction.payment.productIdentifier);
     } else {
-        [self setSubscribeStateEnabled:YES];
+        [self refreshSubscribeState];
     }
 }
 
@@ -429,10 +428,10 @@
     for (NSString *productId in ids) {
         if ([productId isEqualToString:FREE_SUBSCRIPTION_PRODUCT_ID]) {
             // ID is for a free subscription
-             [self setSubscribeStateEnabled:NO];
+             [self refreshSubscribeState];
         } else if ([AUTO_RENEWABLE_SUBSCRIPTION_PRODUCT_IDS containsObject:productId]) {
             // ID is for an auto-renewable subscription
-             [self setSubscribeStateEnabled:YES];
+             [self refreshSubscribeState];
         } else {
             // ID is for an issue
             issuesRetrieved = YES;
@@ -457,12 +456,17 @@
     [[NSNotificationCenter defaultCenter] postNotificationName:@"BakerRefreshStateChanged" object:[NSDictionary dictionaryWithObjectsAndKeys:[NSNumber numberWithBool:enabled], @"state", nil]];
 }
 
--(void)setSubscribeStateEnabled:(BOOL)enabled {
-    if (self.hasSubscribed != enabled) {
-        [[NSNotificationCenter defaultCenter] postNotificationName:@"BakerSubscriptionStateChanged" object:[NSDictionary dictionaryWithObjectsAndKeys:[NSNumber numberWithBool:enabled], @"state", nil]];
+-(void)refreshSubscribeState {
+    BOOL currentStatus = [purchasesManager subscribed];
+    
+    if (self.hasSubscribed != currentStatus) {
+        NSLog(@"User has subscribed %i", currentStatus);
+
+        
+        [[NSNotificationCenter defaultCenter] postNotificationName:@"BakerSubscriptionStateChanged" object:[NSDictionary dictionaryWithObjectsAndKeys:[NSNumber numberWithBool:currentStatus], @"state", nil]];
     }
-    self.hasSubscribed = enabled;
-    NSLog(@"Subscription state enabled %i", enabled);
+    self.hasSubscribed = currentStatus;
+    
     
 }
 
