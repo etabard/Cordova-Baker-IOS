@@ -49,7 +49,6 @@
 @synthesize shelfStatus;
 //@synthesize subscriptionsActionSheet;
 @synthesize supportedOrientation;
-@synthesize blockingProgressView;
 @synthesize bookToBeProcessed;
 @synthesize hasSubscribed;
 
@@ -140,7 +139,7 @@
     [shelfStatus release];
 //    [subscriptionsActionSheet release];
     [supportedOrientation release];
-    [blockingProgressView release];
+
     [issuesManager release];
     [notRecognisedTransactions release];
     [bookToBeProcessed release];
@@ -259,79 +258,28 @@
     return controller;
 }
 
-#pragma mark - Store Kit
-//- (void)handleSubscribeButtonPressed:(NSNotification *)notification {
-//    if (subscriptionsActionSheet.visible) {
-//        [subscriptionsActionSheet dismissWithClickedButtonIndex:(subscriptionsActionSheet.numberOfButtons - 1) animated:YES];
-//    } else {
-//        self.subscriptionsActionSheet = [self buildSubscriptionsActionSheet];
-//        [subscriptionsActionSheet showFromBarButtonItem:self.subscribeButton animated:YES];
-//    }
-//}
-//
-//- (UIActionSheet *)buildSubscriptionsActionSheet {
-//    NSString *title;
-//    if ([api canGetPurchasesJSON]) {
-//        if (purchasesManager.subscribed) {
-//            title = [[BakerLocalizedString sharedInstance] NSLocalizedString:@"SUBSCRIPTIONS_SHEET_SUBSCRIBED"];
-//        } else {
-//            title =[[BakerLocalizedString sharedInstance] NSLocalizedString:@"SUBSCRIPTIONS_SHEET_NOT_SUBSCRIBED"];
-//        }
-//    } else {
-//        title = [[BakerLocalizedString sharedInstance] NSLocalizedString:@"SUBSCRIPTIONS_SHEET_GENERIC"];
-//    }
-//
-//    UIActionSheet *sheet = [[UIActionSheet alloc]initWithTitle:title
-//                                                      delegate:self
-//                                             cancelButtonTitle:nil
-//                                        destructiveButtonTitle:nil
-//                                             otherButtonTitles: nil];
-//    NSMutableArray *actions = [NSMutableArray array];
-//
-//    if (!purchasesManager.subscribed) {
-//        if ([FREE_SUBSCRIPTION_PRODUCT_ID length] > 0 && ![purchasesManager isPurchased:FREE_SUBSCRIPTION_PRODUCT_ID]) {
-//            [sheet addButtonWithTitle:[[BakerLocalizedString sharedInstance] NSLocalizedString:@"SUBSCRIPTIONS_SHEET_FREE"]];
-//            [actions addObject:FREE_SUBSCRIPTION_PRODUCT_ID];
-//        }
-//
-//        for (NSString *productId in AUTO_RENEWABLE_SUBSCRIPTION_PRODUCT_IDS) {
-//            NSString *title = NSLocalizedString(productId, nil);
-//            NSString *price = [purchasesManager priceFor:productId];
-//            if (price) {
-//                [sheet addButtonWithTitle:[NSString stringWithFormat:@"%@ %@", title, price]];
-//                [actions addObject:productId];
-//            }
-//        }
-//    }
-//
-//    if ([issuesManager hasProductIDs]) {
-//        [sheet addButtonWithTitle:[[BakerLocalizedString sharedInstance] NSLocalizedString:@"SUBSCRIPTIONS_SHEET_RESTORE"]];
-//        [actions addObject:@"restore"];
-//    }
-//
-//    [sheet addButtonWithTitle:[[BakerLocalizedString sharedInstance] NSLocalizedString:@"SUBSCRIPTIONS_SHEET_CLOSE"]];
-//    [actions addObject:@"cancel"];
-//
-//    self.subscriptionsActionSheetActions = actions;
-//
-//    sheet.cancelButtonIndex = sheet.numberOfButtons - 1;
-//    return sheet;
-//}
 
 - (BOOL)subscribe:(NSString *)productId {
-
+    [self setProcessingStateEnabled:YES];
+    
     [[NSNotificationCenter defaultCenter] postNotificationName:@"BakerSubscriptionPurchase" object:self]; // -> Baker Analytics Event
     if (![purchasesManager purchase:productId]){
         [Utils showAlertWithTitle:[[BakerLocalizedString sharedInstance] NSLocalizedString:@"SUBSCRIPTION_FAILED_TITLE"]
                                   message:nil
                                                                                        buttonTitle:[[BakerLocalizedString sharedInstance] NSLocalizedString:@"SUBSCRIPTION_FAILED_CLOSE"]];
+        [self setProcessingStateEnabled:NO];
         [self refreshSubscribeState];
         return false;
     } else {
+        [self setProcessingStateEnabled:NO];
         [self refreshSubscribeState];
         return true;
     }
+}
 
+- (void)restore {
+    [self setProcessingStateEnabled:YES];
+    [purchasesManager restore];
 }
 
 - (void)handleRestoreFailed:(NSNotification *)notification {
@@ -340,7 +288,7 @@
                       message:[error localizedDescription]
                   buttonTitle:[[BakerLocalizedString sharedInstance] NSLocalizedString:@"RESTORE_FAILED_CLOSE"]];
 
-    [self.blockingProgressView dismissWithClickedButtonIndex:0 animated:YES];
+    [self setProcessingStateEnabled:NO];
 
 }
 
@@ -362,7 +310,7 @@
     #endif
 
     [self handleRefresh:nil];
-    [self.blockingProgressView dismissWithClickedButtonIndex:0 animated:YES];
+    [self setProcessingStateEnabled:NO];
 }
 
 - (void)handleRestoredIssueNotRecognised:(NSNotification *)notification {
@@ -370,11 +318,6 @@
     [notRecognisedTransactions addObject:transaction];
 }
 
-// TODO: this can probably be removed
-//- (void)handleSubscription:(NSNotification *)notification {
-//    [self setSubscribeButtonEnabled:NO];
-//    [purchasesManager purchase:FREE_SUBSCRIPTION_PRODUCT_ID];
-//}
 
 - (void)handleSubscriptionPurchased:(NSNotification *)notification {
     SKPaymentTransaction *transaction = [notification.userInfo objectForKey:@"transaction"];
@@ -456,6 +399,12 @@
     [[NSNotificationCenter defaultCenter] postNotificationName:@"BakerRefreshStateChanged" object:[NSDictionary dictionaryWithObjectsAndKeys:[NSNumber numberWithBool:enabled], @"state", nil]];
 }
 
+-(void)setProcessingStateEnabled:(BOOL)enabled {
+    NSLog(@"PRocessing mode enabled %i", enabled);
+    [[NSNotificationCenter defaultCenter] postNotificationName:@"BakerProcessingStateChanged" object:[NSDictionary dictionaryWithObjectsAndKeys:[NSNumber numberWithBool:enabled], @"state", nil]];
+}
+
+
 -(void)refreshSubscribeState {
     BOOL currentStatus = [purchasesManager subscribed];
     
@@ -481,10 +430,6 @@
 #endif
 
 #pragma mark - Navigation management
-
-//- (void)collectionView:(UICollectionView *)collectionView didSelectItemAtIndexPath:(NSIndexPath *)indexPath {
-//    [collectionView deselectItemAtIndexPath:indexPath animated:YES];
-//}
 
 - (void)readIssue:(BakerIssue *)issue
 {

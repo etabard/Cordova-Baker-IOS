@@ -14,6 +14,7 @@ NSString * const kBakerEventsType[] = {
     @"BakerIssueDownloadProgress",
     @"BakerIssueCoverReady",
     @"BakerRefreshStateChanged",
+    @"BakerProcessingStateChanged",
     @"BakerSubscriptionStateChanged",
 };
 
@@ -57,7 +58,7 @@ NSString * const kBakerEventsType[] = {
     static NSArray *events;
     static dispatch_once_t onceToken;
     dispatch_once(&onceToken, ^{
-        events = [NSArray arrayWithObjects:kBakerEventsType count:8];
+        events = [NSArray arrayWithObjects:kBakerEventsType count:9];
     });
     
     return events;
@@ -92,6 +93,8 @@ NSString * const kBakerEventsType[] = {
         result = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK messageAsDictionary:[NSDictionary dictionaryWithObjectsAndKeys:[notification name],@"eventType", [notification object], @"data", nil]];
     } else if ([[notification name] isEqualToString:@"BakerRefreshStateChanged"]) {
         result = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK messageAsDictionary:[NSDictionary dictionaryWithObjectsAndKeys:[notification name],@"eventType", [notification object], @"data", nil]];
+    } else if ([[notification name] isEqualToString:@"BakerProcessingStateChanged"]) {
+            result = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK messageAsDictionary:[NSDictionary dictionaryWithObjectsAndKeys:[notification name],@"eventType", [notification object], @"data", nil]];
     } else if ([[notification name] isEqualToString:@"BakerSubscriptionStateChanged"]) {
         result = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK messageAsDictionary:[NSDictionary dictionaryWithObjectsAndKeys:[notification name],@"eventType", [notification object], @"data", nil]];
     } else if ([[notification name] isEqualToString:@"BakerIssueAdded"]) {
@@ -146,7 +149,7 @@ NSString * const kBakerEventsType[] = {
 
 - (void)restore: (CDVInvokedUrlCommand*)command
 {
-    [[PurchasesManager sharedInstance] restore];
+    [shelfController restore];
     CDVPluginResult *pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK messageAsString:@"OK"];
     [self.commandDelegate sendPluginResult:pluginResult callbackId:command.callbackId];
 }
@@ -192,7 +195,6 @@ NSString * const kBakerEventsType[] = {
     CDVPluginResult *pluginResult = nil;
     NSString* bookId = [command.arguments objectAtIndex:0];
     IssueController *currentBook = [self getIssueControllerById:bookId];
-    
     if (currentBook) {
         [currentBook buy];
         pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK messageAsString:@"OK"];

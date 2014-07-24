@@ -61,13 +61,6 @@
 @property (retain, nonatomic) NSMutableArray *issueViewControllers;
 @property (retain, nonatomic) ShelfStatus *shelfStatus;
 
-@property (strong, nonatomic) UIImageView *background;
-//@property (strong, nonatomic) UIBarButtonItem *refreshButton;
-//@property (strong, nonatomic) UIBarButtonItem *subscribeButton;
-
-//@property (strong, nonatomic) UIActionSheet *subscriptionsActionSheet;
-//@property (strong, nonatomic) NSArray *subscriptionsActionSheetActions;
-@property (strong, nonatomic) UIAlertView *blockingProgressView;
 
 @property (copy, nonatomic) NSString *bookToBeProcessed;
 
@@ -78,9 +71,7 @@
 #pragma mark - Shelf data source
 #ifdef BAKER_NEWSSTAND
 - (void)handleRefresh:(NSNotification *)notification;
-
-#pragma mark - Store Kit
-//- (void)handleSubscription:(NSNotification *)notification;
+- (void)restore;
 #endif
 
 #pragma mark - Navigation management
