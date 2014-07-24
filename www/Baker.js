@@ -12,6 +12,8 @@
         this.ready = false;
         this.subscriptions = [];
         this.hasSubscribed = false;
+        this.appID = null;
+        this.userID = null;
     });
 
 
@@ -178,7 +180,9 @@
             };
         }
         var that = this;
-        var setupOk = function () {
+        var setupOk = function (response) {
+            BakerInstance.appID = response.appID;
+            BakerInstance.userID = response.userID;
             log('setup ok');
             
             // protectCall(options.success, 'init::success');

@@ -44,10 +44,10 @@
 
 @synthesize issues;
 @synthesize issueViewControllers;
-@synthesize subscribeButton;
-@synthesize refreshButton;
+//@synthesize subscribeButton;
+//@synthesize refreshButton;
 @synthesize shelfStatus;
-@synthesize subscriptionsActionSheet;
+//@synthesize subscriptionsActionSheet;
 @synthesize supportedOrientation;
 @synthesize blockingProgressView;
 @synthesize bookToBeProcessed;
@@ -135,10 +135,10 @@
 {
     [issueViewControllers release];
     [issues release];
-    [subscribeButton release];
-    [refreshButton release];
+//    [subscribeButton release];
+//    [refreshButton release];
     [shelfStatus release];
-    [subscriptionsActionSheet release];
+//    [subscriptionsActionSheet release];
     [supportedOrientation release];
     [blockingProgressView release];
     [issuesManager release];
@@ -260,63 +260,63 @@
 }
 
 #pragma mark - Store Kit
-- (void)handleSubscribeButtonPressed:(NSNotification *)notification {
-    if (subscriptionsActionSheet.visible) {
-        [subscriptionsActionSheet dismissWithClickedButtonIndex:(subscriptionsActionSheet.numberOfButtons - 1) animated:YES];
-    } else {
-        self.subscriptionsActionSheet = [self buildSubscriptionsActionSheet];
-        [subscriptionsActionSheet showFromBarButtonItem:self.subscribeButton animated:YES];
-    }
-}
-
-- (UIActionSheet *)buildSubscriptionsActionSheet {
-    NSString *title;
-    if ([api canGetPurchasesJSON]) {
-        if (purchasesManager.subscribed) {
-            title = [[BakerLocalizedString sharedInstance] NSLocalizedString:@"SUBSCRIPTIONS_SHEET_SUBSCRIBED"];
-        } else {
-            title =[[BakerLocalizedString sharedInstance] NSLocalizedString:@"SUBSCRIPTIONS_SHEET_NOT_SUBSCRIBED"];
-        }
-    } else {
-        title = [[BakerLocalizedString sharedInstance] NSLocalizedString:@"SUBSCRIPTIONS_SHEET_GENERIC"];
-    }
-
-    UIActionSheet *sheet = [[UIActionSheet alloc]initWithTitle:title
-                                                      delegate:self
-                                             cancelButtonTitle:nil
-                                        destructiveButtonTitle:nil
-                                             otherButtonTitles: nil];
-    NSMutableArray *actions = [NSMutableArray array];
-
-    if (!purchasesManager.subscribed) {
-        if ([FREE_SUBSCRIPTION_PRODUCT_ID length] > 0 && ![purchasesManager isPurchased:FREE_SUBSCRIPTION_PRODUCT_ID]) {
-            [sheet addButtonWithTitle:[[BakerLocalizedString sharedInstance] NSLocalizedString:@"SUBSCRIPTIONS_SHEET_FREE"]];
-            [actions addObject:FREE_SUBSCRIPTION_PRODUCT_ID];
-        }
-
-        for (NSString *productId in AUTO_RENEWABLE_SUBSCRIPTION_PRODUCT_IDS) {
-            NSString *title = NSLocalizedString(productId, nil);
-            NSString *price = [purchasesManager priceFor:productId];
-            if (price) {
-                [sheet addButtonWithTitle:[NSString stringWithFormat:@"%@ %@", title, price]];
-                [actions addObject:productId];
-            }
-        }
-    }
-
-    if ([issuesManager hasProductIDs]) {
-        [sheet addButtonWithTitle:[[BakerLocalizedString sharedInstance] NSLocalizedString:@"SUBSCRIPTIONS_SHEET_RESTORE"]];
-        [actions addObject:@"restore"];
-    }
-
-    [sheet addButtonWithTitle:[[BakerLocalizedString sharedInstance] NSLocalizedString:@"SUBSCRIPTIONS_SHEET_CLOSE"]];
-    [actions addObject:@"cancel"];
-
-    self.subscriptionsActionSheetActions = actions;
-
-    sheet.cancelButtonIndex = sheet.numberOfButtons - 1;
-    return sheet;
-}
+//- (void)handleSubscribeButtonPressed:(NSNotification *)notification {
+//    if (subscriptionsActionSheet.visible) {
+//        [subscriptionsActionSheet dismissWithClickedButtonIndex:(subscriptionsActionSheet.numberOfButtons - 1) animated:YES];
+//    } else {
+//        self.subscriptionsActionSheet = [self buildSubscriptionsActionSheet];
+//        [subscriptionsActionSheet showFromBarButtonItem:self.subscribeButton animated:YES];
+//    }
+//}
+//
+//- (UIActionSheet *)buildSubscriptionsActionSheet {
+//    NSString *title;
+//    if ([api canGetPurchasesJSON]) {
+//        if (purchasesManager.subscribed) {
+//            title = [[BakerLocalizedString sharedInstance] NSLocalizedString:@"SUBSCRIPTIONS_SHEET_SUBSCRIBED"];
+//        } else {
+//            title =[[BakerLocalizedString sharedInstance] NSLocalizedString:@"SUBSCRIPTIONS_SHEET_NOT_SUBSCRIBED"];
+//        }
+//    } else {
+//        title = [[BakerLocalizedString sharedInstance] NSLocalizedString:@"SUBSCRIPTIONS_SHEET_GENERIC"];
+//    }
+//
+//    UIActionSheet *sheet = [[UIActionSheet alloc]initWithTitle:title
+//                                                      delegate:self
+//                                             cancelButtonTitle:nil
+//                                        destructiveButtonTitle:nil
+//                                             otherButtonTitles: nil];
+//    NSMutableArray *actions = [NSMutableArray array];
+//
+//    if (!purchasesManager.subscribed) {
+//        if ([FREE_SUBSCRIPTION_PRODUCT_ID length] > 0 && ![purchasesManager isPurchased:FREE_SUBSCRIPTION_PRODUCT_ID]) {
+//            [sheet addButtonWithTitle:[[BakerLocalizedString sharedInstance] NSLocalizedString:@"SUBSCRIPTIONS_SHEET_FREE"]];
+//            [actions addObject:FREE_SUBSCRIPTION_PRODUCT_ID];
+//        }
+//
+//        for (NSString *productId in AUTO_RENEWABLE_SUBSCRIPTION_PRODUCT_IDS) {
+//            NSString *title = NSLocalizedString(productId, nil);
+//            NSString *price = [purchasesManager priceFor:productId];
+//            if (price) {
+//                [sheet addButtonWithTitle:[NSString stringWithFormat:@"%@ %@", title, price]];
+//                [actions addObject:productId];
+//            }
+//        }
+//    }
+//
+//    if ([issuesManager hasProductIDs]) {
+//        [sheet addButtonWithTitle:[[BakerLocalizedString sharedInstance] NSLocalizedString:@"SUBSCRIPTIONS_SHEET_RESTORE"]];
+//        [actions addObject:@"restore"];
+//    }
+//
+//    [sheet addButtonWithTitle:[[BakerLocalizedString sharedInstance] NSLocalizedString:@"SUBSCRIPTIONS_SHEET_CLOSE"]];
+//    [actions addObject:@"cancel"];
+//
+//    self.subscriptionsActionSheetActions = actions;
+//
+//    sheet.cancelButtonIndex = sheet.numberOfButtons - 1;
+//    return sheet;
+//}
 
 - (BOOL)subscribe:(NSString *)productId {
 
@@ -482,9 +482,9 @@
 
 #pragma mark - Navigation management
 
-- (void)collectionView:(UICollectionView *)collectionView didSelectItemAtIndexPath:(NSIndexPath *)indexPath {
-    [collectionView deselectItemAtIndexPath:indexPath animated:YES];
-}
+//- (void)collectionView:(UICollectionView *)collectionView didSelectItemAtIndexPath:(NSIndexPath *)indexPath {
+//    [collectionView deselectItemAtIndexPath:indexPath animated:YES];
+//}
 
 - (void)readIssue:(BakerIssue *)issue
 {

@@ -62,11 +62,11 @@
 @property (retain, nonatomic) ShelfStatus *shelfStatus;
 
 @property (strong, nonatomic) UIImageView *background;
-@property (strong, nonatomic) UIBarButtonItem *refreshButton;
-@property (strong, nonatomic) UIBarButtonItem *subscribeButton;
+//@property (strong, nonatomic) UIBarButtonItem *refreshButton;
+//@property (strong, nonatomic) UIBarButtonItem *subscribeButton;
 
-@property (strong, nonatomic) UIActionSheet *subscriptionsActionSheet;
-@property (strong, nonatomic) NSArray *subscriptionsActionSheetActions;
+//@property (strong, nonatomic) UIActionSheet *subscriptionsActionSheet;
+//@property (strong, nonatomic) NSArray *subscriptionsActionSheetActions;
 @property (strong, nonatomic) UIAlertView *blockingProgressView;
 
 @property (copy, nonatomic) NSString *bookToBeProcessed;
@@ -80,7 +80,7 @@
 - (void)handleRefresh:(NSNotification *)notification;
 
 #pragma mark - Store Kit
-- (void)handleSubscription:(NSNotification *)notification;
+//- (void)handleSubscription:(NSNotification *)notification;
 #endif
 
 #pragma mark - Navigation management

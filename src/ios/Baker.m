@@ -4,6 +4,7 @@
 #import "BakerAPI.h"
 #import "IssuesManager.h"
 #import "ShelfController.h"
+#import "Utils.h"
 
 NSString * const kBakerEventsType[] = {
     @"BakerApplicationReady",
@@ -43,9 +44,10 @@ NSString * const kBakerEventsType[] = {
     
 
     self.shelfController = [[[ShelfController alloc] init] autorelease];
-
     
-    CDVPluginResult *pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK messageAsString:@"OK"];
+     NSDictionary *result = [NSDictionary dictionaryWithObjectsAndKeys:[Utils appID], @"appID", [BakerAPI UUID], @"userID", nil];
+    
+    CDVPluginResult *pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK messageAsDictionary:result];
     [self.commandDelegate sendPluginResult:pluginResult callbackId:command.callbackId];
     [[NSNotificationCenter defaultCenter] postNotificationName:@"BakerApplicationStart" object:self];
 }
