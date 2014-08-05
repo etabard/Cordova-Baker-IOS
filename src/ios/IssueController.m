@@ -34,6 +34,7 @@
 #import "Baker.h"
 #import "IssueController.h"
 #import "SSZipArchive.h"
+#import <QuartzCore/QuartzCore.h>
 #import "BakerLocalizedString.h"
 #ifdef BAKER_NEWSSTAND
 #import "PurchasesManager.h"
@@ -415,6 +416,28 @@
             if (![[NSFileManager defaultManager] fileExistsAtPath:destinationPath]) {
                 newImage = [IssueController imageWithImage:image scaledToMaxWidth:250 maxHeight:250];
                 data = UIImagePNGRepresentation(newImage);
+                [data writeToFile:destinationPath atomically:YES];
+            }
+            
+            destinationPath = [self.issue.coverPath stringByAppendingString:@"-blur.png"];
+            if (![[NSFileManager defaultManager] fileExistsAtPath:destinationPath]) {
+                newImage = [IssueController imageWithImage:image scaledToMaxWidth:250 maxHeight:250];
+                CIContext *context = [CIContext contextWithOptions:nil];
+                CIImage *inputImage = [CIImage imageWithCGImage:newImage.CGImage];
+                
+                // setting up Gaussian Blur (we could use one of many filters offered by Core Image)
+                CIFilter *filter = [CIFilter filterWithName:@"CIGaussianBlur"];
+                [filter setValue:inputImage forKey:kCIInputImageKey];
+                [filter setValue:[NSNumber numberWithFloat:30.0] forKey:@"inputRadius"];
+                CIImage *result = [filter valueForKey:kCIOutputImageKey];
+                
+                // CIGaussianBlur has a tendency to shrink the image a little,
+                // this ensures it matches up exactly to the bounds of our original image
+                CGImageRef cgImage = [context createCGImage:result fromRect:[inputImage extent]];
+                
+                UIImage *returnImage = [UIImage imageWithCGImage:cgImage];//create a UIImage for this function to "return" so that ARC can manage the memory of the blur... ARC can't manage CGImageRefs so we need to release it before this function "returns" and ends.
+                CGImageRelease(cgImage);//release CGImageRef because ARC doesn't manage this on its own.
+                data = UIImagePNGRepresentation(returnImage);
                 [data writeToFile:destinationPath atomically:YES];
             }
             

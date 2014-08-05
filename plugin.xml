@@ -134,6 +134,7 @@
         <framework src="CoreGraphics.framework" />
         <framework src="QuartzCore.framework" />
         <framework src="MessageUI.framework" />
+        <framework src="CoreImage.framework" />
 
         <framework src="NewsstandKit.framework" />
         <framework src="StoreKit.framework" />
