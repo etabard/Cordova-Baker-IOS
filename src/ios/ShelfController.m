@@ -412,7 +412,7 @@
         NSLog(@"User has subscribed %i", currentStatus);
 
         
-        [[NSNotificationCenter defaultCenter] postNotificationName:@"BakerSubscriptionStateChanged" object:[NSDictionary dictionaryWithObjectsAndKeys:[NSNumber numberWithBool:currentStatus], @"state", nil]];
+        [[NSNotificationCenter defaultCenter] postNotificationName:@"BakerSubscriptionStateChanged" object:[NSDictionary dictionaryWithObjectsAndKeys:[NSNumber numberWithBool:currentStatus], @"state", purchasesManager.subscriptionExpiration, @"expiration", nil]];
     }
     self.hasSubscribed = currentStatus;
     

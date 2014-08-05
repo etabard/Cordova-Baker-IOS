@@ -43,6 +43,7 @@
 
 @synthesize products;
 @synthesize subscribed;
+@synthesize subscriptionExpiration;
 
 -(id)init {
     self = [super init];
@@ -232,7 +233,9 @@
                 if (purchasesResponse) {
                     NSArray *purchasedIssues = [purchasesResponse objectForKey:@"issues"];
                     self.subscribed = [[purchasesResponse objectForKey:@"subscribed"] boolValue];
-                    
+                    //self.subscriptionExpiration = [[purchasesResponse objectForKey:@"expiration"] stringValue];
+                    id testObject = [purchasesResponse objectForKey:@"expiration"];
+                    self.subscriptionExpiration = testObject==[NSNull null] ? @"" : testObject;
                     [productIDs enumerateObjectsUsingBlock:^(id obj, BOOL *stop) {
                         [_purchases setObject:[NSNumber numberWithBool:[purchasedIssues containsObject:obj]] forKey:obj];
                     }];

@@ -12,6 +12,7 @@
         this.ready = false;
         this.subscriptions = [];
         this.hasSubscribed = false;
+        this.subscriptionExpiration = null;
         this.appID = null;
         this.userID = null;
     });
@@ -51,6 +52,7 @@
             break;
             case 'BakerSubscriptionStateChanged':
                 BakerInstance.hasSubscribed = e.data.state;
+                BakerInstance.subscriptionExpiration = e.data.expiration;
             break;
             case 'BakerIssueStateChanged':
                 if (BakerInstance.ready) {
