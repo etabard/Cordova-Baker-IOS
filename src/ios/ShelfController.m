@@ -392,6 +392,21 @@
         }
         [shelfStatus save];
     }
+    
+    
+    [[NSNotificationCenter defaultCenter] postNotificationName:@"BakerSubscriptionsUpdated" object:[NSDictionary dictionaryWithObjectsAndKeys:[self getSubscriptions], @"subscriptions", nil]];
+}
+
+-(NSMutableArray *)getSubscriptions {
+    NSMutableArray *data = [[NSMutableArray alloc] init];
+    
+    for (NSString *productId in AUTO_RENEWABLE_SUBSCRIPTION_PRODUCT_IDS) {
+        NSString *title = [[PurchasesManager sharedInstance] displayTitleFor:productId];
+        NSString *price = [[PurchasesManager sharedInstance] priceFor:productId];
+        [data addObject:[NSDictionary dictionaryWithObjectsAndKeys:productId,@"ID",title,@"title",price,@"price", nil]];
+    }
+    
+    return data;
 }
 
 -(void)setrefreshStateEnabled:(BOOL)enabled {

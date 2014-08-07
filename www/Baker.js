@@ -101,6 +101,9 @@
                     book.coverReady = true;
                 }
             break;
+            case 'BakerSubscriptionsUpdated':
+                BakerInstance.subscriptions = e.data.subscriptions;
+            break;
             case 'BakerIssueDownloadProgress':
                 if (BakerInstance.ready) {
                     var progress = Math.round(e.data.progress * 100);

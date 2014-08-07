@@ -80,6 +80,7 @@
 - (void)receiveBookProtocolNotification:(NSNotification *)notification;
 - (BOOL)subscribe:(NSString *)productId;
 - (void)handleBookToBeProcessed;
+- (NSMutableArray *)getSubscriptions;
 - (IssueController *)issueViewControllerWithID:(NSString *)ID;
 
 

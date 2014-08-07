@@ -16,6 +16,7 @@ NSString * const kBakerEventsType[] = {
     @"BakerRefreshStateChanged",
     @"BakerProcessingStateChanged",
     @"BakerSubscriptionStateChanged",
+    @"BakerSubscriptionsUpdated"
 };
 
 @implementation Baker
@@ -58,7 +59,7 @@ NSString * const kBakerEventsType[] = {
     static NSArray *events;
     static dispatch_once_t onceToken;
     dispatch_once(&onceToken, ^{
-        events = [NSArray arrayWithObjects:kBakerEventsType count:9];
+        events = [NSArray arrayWithObjects:kBakerEventsType count:10];
     });
     
     return events;
@@ -100,6 +101,8 @@ NSString * const kBakerEventsType[] = {
     } else if ([[notification name] isEqualToString:@"BakerIssueAdded"]) {
         result = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK messageAsDictionary:[NSDictionary dictionaryWithObjectsAndKeys:[notification name],@"eventType", [notification object], @"data", nil]];
     } else if ([[notification name] isEqualToString:@"BakerIssueDeleted"]) {
+        result = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK messageAsDictionary:[NSDictionary dictionaryWithObjectsAndKeys:[notification name],@"eventType", [notification object], @"data", nil]];
+    } else if ([[notification name] isEqualToString:@"BakerSubscriptionsUpdated"]) {
         result = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK messageAsDictionary:[NSDictionary dictionaryWithObjectsAndKeys:[notification name],@"eventType", [notification object], @"data", nil]];
     } else {
         
@@ -176,16 +179,7 @@ NSString * const kBakerEventsType[] = {
 
 - (void)getSubscriptions: (CDVInvokedUrlCommand*)command
 {
-    NSMutableArray *data = [[NSMutableArray alloc] init];
-    
-    for (NSString *productId in AUTO_RENEWABLE_SUBSCRIPTION_PRODUCT_IDS) {
-        NSString *title = [[PurchasesManager sharedInstance] displayTitleFor:productId];
-        NSString *price = [[PurchasesManager sharedInstance] priceFor:productId];
-
-        [data addObject:[NSDictionary dictionaryWithObjectsAndKeys:productId,@"ID",title,@"title",price,@"price", nil]];
-    }
-    
-    CDVPluginResult *pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK messageAsArray:data];
+    CDVPluginResult *pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK messageAsArray:[self.shelfController getSubscriptions]];
     
     [self.commandDelegate sendPluginResult:pluginResult callbackId:command.callbackId];
 }
