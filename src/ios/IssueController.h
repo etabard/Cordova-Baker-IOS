@@ -79,6 +79,7 @@ typedef struct {
 - (void)actionButtonPressed:(UIButton *)sender;
 #ifdef BAKER_NEWSSTAND
 - (void)download;
+- (void)cancel;
 - (void)setPrice:(NSString *)price;
 - (void)buy;
 #endif

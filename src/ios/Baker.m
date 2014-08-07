@@ -220,6 +220,22 @@ NSString * const kBakerEventsType[] = {
     [self.commandDelegate sendPluginResult:pluginResult callbackId:command.callbackId];
 }
 
+- (void)cancelDownload: (CDVInvokedUrlCommand *)command
+{
+    CDVPluginResult *pluginResult = nil;
+    NSString* bookId = [command.arguments objectAtIndex:0];
+    IssueController *currentBook = [self getIssueControllerById:bookId];
+    if (currentBook) {
+        [currentBook cancel];
+        pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK messageAsString:@"OK"];
+    } else {
+        pluginResult= [CDVPluginResult resultWithStatus:CDVCommandStatus_ERROR messageAsString:@"ERROR"];
+    }
+    
+    [self.commandDelegate sendPluginResult:pluginResult callbackId:command.callbackId];
+}
+
+
 - (void)archive: (CDVInvokedUrlCommand *)command
 {
     CDVPluginResult *pluginResult = nil;

@@ -300,6 +300,18 @@
     [updateAlert release];
 }
 
+- (void)cancel
+{
+    UIAlertView *updateAlert = [[UIAlertView alloc]
+                                initWithTitle: [[BakerLocalizedString sharedInstance] NSLocalizedString:@"CANCEL_ALERT_TITLE"]
+                                message: [[BakerLocalizedString sharedInstance] NSLocalizedString:@"CANCEL_ALERT_MESSAGE"]
+                                delegate: self
+                                cancelButtonTitle: [[BakerLocalizedString sharedInstance] NSLocalizedString:@"CANCEL_ALERT_BUTTON_CANCEL"]
+                                otherButtonTitles: [[BakerLocalizedString sharedInstance] NSLocalizedString:@"CANCEL_ALERT_BUTTON_OK"], nil];
+    [updateAlert show];
+    [updateAlert release];
+}
+
 - (void) alertView:(UIAlertView *)alertView clickedButtonAtIndex:(NSInteger)buttonIndex
 {
     if(buttonIndex == 1){
@@ -314,7 +326,7 @@
         
         nkIssue = [nkLib addIssueWithName:name date:date];
         self.issue.path = [[nkIssue contentURL] path];
-        
+        self.issue.transientStatus = BakerIssueTransientStatusNone;
         [self refresh];
     }
 }
@@ -444,8 +456,14 @@
             [[NSNotificationCenter defaultCenter] postNotificationName:@"BakerIssueCoverReady" object:[NSDictionary dictionaryWithObjectsAndKeys: [Baker issueToDictionnary:self.issue], @"issue", nil]];
         }];
     }
+    
+    if ([self.currentStatus isEqualToString:status]) {
+        return;
+    }
+    
+    
     NSLog(@"[BakerShelf] Shelf UI - Refreshing %@ item with status from <%@> to <%@>", self.issue.ID, self.currentStatus, status);
-    [[NSNotificationCenter defaultCenter] postNotificationName:@"BakerIssueStateChanged" object:[NSDictionary dictionaryWithObjectsAndKeys:[Baker issueToDictionnary:self.issue],@"issue", nil]];
+    
     
     
     if ([status isEqualToString:@"remote"])
@@ -580,6 +598,8 @@
     
     
     self.currentStatus = status;
+    
+    [[NSNotificationCenter defaultCenter] postNotificationName:@"BakerIssueStateChanged" object:[NSDictionary dictionaryWithObjectsAndKeys:[Baker issueToDictionnary:self.issue],@"issue", nil]];
 }
 
 @end

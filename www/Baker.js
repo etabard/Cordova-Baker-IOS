@@ -281,6 +281,10 @@
         exec('download', [BookId], function() {}, function() {});
     };
 
+    Baker.prototype.cancelDownload = function(BookId) {
+        exec('cancelDownload', [BookId], function() {}, function() {});
+    };
+
     Baker.prototype.archive = function(BookId) {
         exec('archive', [BookId], function() {}, function() {});
     };
@@ -351,6 +355,10 @@
 
     BakerIssue.prototype.download = function () {
         BakerInstance.download(this.ID);
+    };
+
+    BakerIssue.prototype.cancelDownload = function () {
+        BakerInstance.cancelDownload(this.ID);
     };
 
     BakerIssue.prototype.archive = function () {
