@@ -23,7 +23,7 @@
 
     var deferredEvents = [];
 
-    var eventHandler = function (e) {
+    var eventHandler = function (e, deferred) {
         var fireEvent = true;
         var eventType = e.eventType;
         var eventData = e.data;
@@ -36,7 +36,10 @@
         }
 
         if (BakerInstance.ready && e.data.issue && book) {
-            bookChanged = book.update(e.data.issue);
+            //Prevent from updating old deferred datas
+            if (!deferred) {
+                bookChanged = book.update(e.data.issue);
+            }
             eventData = book;
         } else if (BakerInstance.ready && e.data.issue && !book && e.eventType != 'BakerIssueAdded') {
             return;
@@ -164,7 +167,7 @@
                 BakerInstance.ready = true;
                 fireDocumentEvent('BakerApplicationReady', BakerInstance);
                 deferredEvents.forEach(function(e) {
-                    eventHandler(e);
+                    eventHandler(e, true);
                 });
             });
         });
@@ -219,11 +222,11 @@
 
     Baker.prototype.refresh = function() {
         var setupOk = function () {
-            console.log('restore ok');
+            console.log('refresh ok');
             // protectCall(options.success, 'init::success');
         };
         var setupFailed = function () {
-            console.log('restore failed');
+            console.log('refresh failed');
             // protectCall(options.error, 'init::error');
         };
         exec('refresh', [], setupOk, setupFailed);
