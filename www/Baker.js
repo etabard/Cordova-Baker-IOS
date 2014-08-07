@@ -46,10 +46,10 @@
         }
         switch(e.eventType) {
             case 'BakerRefreshStateChanged':
-                if (!BakerInstance.ready && e.data.state === true) {
+                if (!BakerInstance.ready && e.data.state === false) {
                     //First refresh ended
                     prepareBaker();
-                } else if (!BakerInstance.ready && e.data.state === false) {
+                } else if (!BakerInstance.ready && e.data.state === true) {
                     //First refresh is starting do nothing
                 }
             break;

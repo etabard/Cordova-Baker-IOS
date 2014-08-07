@@ -124,13 +124,15 @@
     for (SKProduct *skProduct in response.products) {
         [self.products setObject:skProduct forKey:skProduct.productIdentifier];
         [ids addObject:skProduct.productIdentifier];
+        NSMutableArray *toDelete = [NSMutableArray array];
+
         for (SKPaymentTransaction *transaction in self.unrecognizedTransactions) {
             if ([transaction.payment.productIdentifier isEqualToString:skProduct.productIdentifier]) {
-                [self.unrecognizedTransactions removeObject:transaction];
+                [toDelete removeObject:transaction];
                 [self finishTransaction:transaction];
-                
             }
         }
+        [self.unrecognizedTransactions removeObjectsInArray:toDelete];
         
     }
 

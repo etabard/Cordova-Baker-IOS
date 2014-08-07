@@ -411,7 +411,7 @@
 
 -(void)setrefreshStateEnabled:(BOOL)enabled {
     NSLog(@"Refresh mode enabled %i", enabled);
-    [[NSNotificationCenter defaultCenter] postNotificationName:@"BakerRefreshStateChanged" object:[NSDictionary dictionaryWithObjectsAndKeys:[NSNumber numberWithBool:enabled], @"state", nil]];
+    [[NSNotificationCenter defaultCenter] postNotificationName:@"BakerRefreshStateChanged" object:[NSDictionary dictionaryWithObjectsAndKeys:[NSNumber numberWithBool:!enabled], @"state", nil]];
 }
 
 -(void)setProcessingStateEnabled:(BOOL)enabled {
