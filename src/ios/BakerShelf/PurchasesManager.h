@@ -44,6 +44,7 @@
 @property (retain, nonatomic) NSNumberFormatter *numberFormatter;
 @property (nonatomic) BOOL subscribed;
 @property (retain, nonatomic) NSString *subscriptionExpiration;
+@property (retain, nonatomic) NSMutableArray *unrecognizedTransactions;
 
 #pragma mark - Singleton
 

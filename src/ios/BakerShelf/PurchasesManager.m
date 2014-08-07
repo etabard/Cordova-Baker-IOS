@@ -44,12 +44,14 @@
 @synthesize products;
 @synthesize subscribed;
 @synthesize subscriptionExpiration;
+@synthesize unrecognizedTransactions;
 
 -(id)init {
     self = [super init];
 
     if (self) {
         self.products = [[[NSMutableDictionary alloc] init] autorelease];
+        self.unrecognizedTransactions = [[[NSMutableArray alloc] init]autorelease];
         self.subscribed = NO;
 
         _purchases = [[NSMutableDictionary alloc] init];
@@ -122,6 +124,14 @@
     for (SKProduct *skProduct in response.products) {
         [self.products setObject:skProduct forKey:skProduct.productIdentifier];
         [ids addObject:skProduct.productIdentifier];
+        for (SKPaymentTransaction *transaction in self.unrecognizedTransactions) {
+            if ([transaction.payment.productIdentifier isEqualToString:skProduct.productIdentifier]) {
+                [self.unrecognizedTransactions removeObject:transaction];
+                [self finishTransaction:transaction];
+                
+            }
+        }
+        
     }
 
     NSDictionary *userInfo = [NSDictionary dictionaryWithObject:ids forKey:@"ids"];
@@ -325,6 +335,7 @@
     } else if ([self productFor:productId]) {
         [[NSNotificationCenter defaultCenter] postNotificationName:@"notification_issue_purchased" object:self userInfo:userInfo];
     } else {
+        [self.unrecognizedTransactions addObject:transaction];
         NSLog(@"ERROR: Completed transaction for %@, which is not a Product ID this app recognises", productId);
     }
 }
