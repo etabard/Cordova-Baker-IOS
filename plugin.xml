@@ -17,10 +17,10 @@
     <issue>https://github.com/etabard/Cordova-Baker-IOS/issues</issue>
     <!-- ios -->
     <platform name="ios">
-        <preference name="BAKER_NEWSSTAND" />
+        <!--<preference name="BAKER_NEWSSTAND" />
         <preference name="BAKER_BASE_URL" />
         <preference name="FREE_SUBSCRIPTION_PRODUCT_ID" />
-        <preference name="AUTO_RENEWABLE_SUBSCRIPTION_PRODUCT_IDS" />
+        <preference name="AUTO_RENEWABLE_SUBSCRIPTION_PRODUCT_IDS" />-->
 
         <js-module src="www/Baker.js" name="Baker">
             <clobbers target="Baker" />
@@ -190,7 +190,7 @@
             </dict>
         </config-file>
         
-        <config-file target="*-Info.plist" parent="BakerOptions">
+        <!--<config-file target="*-Info.plist" parent="BakerOptions">
             <dict>
               <key>NewstandEnabled</key>
               <string>$BAKER_NEWSSTAND</string>
@@ -201,7 +201,7 @@
               <key>AutoRenewableSubscriptionProductIds</key>
               <string>$AUTO_RENEWABLE_SUBSCRIPTION_PRODUCT_IDS</string>
             </dict>
-        </config-file>
+        </config-file>-->
 
     </platform>
 </plugin>
