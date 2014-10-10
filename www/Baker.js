@@ -235,6 +235,22 @@
         exec('refresh', [], setupOk, setupFailed);
     };
 
+    Baker.prototype.logout = function(success) {
+        var setupOk = function (uuid) {
+            console.log('logout ok');
+            console.log(uuid);
+            BakerInstance.userID = uuid;
+            protectCall(success, 'logout::success');
+            // protectCall(options.success, 'init::success');
+        };
+        var setupFailed = function () {
+            console.log('logout failed');
+            // protectCall(options.error, 'init::error');
+        };
+
+        exec('logout', [], setupOk, setupFailed);
+    };
+
     Baker.prototype.getBooks = function (success) {
         var self = this;
 
@@ -288,8 +304,13 @@
         exec('cancelDownload', [BookId], function() {}, function() {});
     };
 
-    Baker.prototype.archive = function(BookId) {
-        exec('archive', [BookId], function() {}, function() {});
+    Baker.prototype.archive = function(BookId, silent) {
+        if (silent) {
+            exec('silentArchive', [BookId], function() {}, function() {});
+        } else {
+            exec('archive', [BookId], function() {}, function() {});
+        }
+        
     };
 
     Baker.prototype.getBookInfos = function(BookId, success, error) {
@@ -364,8 +385,8 @@
         BakerInstance.cancelDownload(this.ID);
     };
 
-    BakerIssue.prototype.archive = function () {
-        BakerInstance.archive(this.ID);
+    BakerIssue.prototype.archive = function (silent) {
+        BakerInstance.archive(this.ID, silent);
     };
 
     BakerIssue.prototype.getInfos = function (success, error) {

@@ -39,7 +39,6 @@ NSString * const kBakerEventsType[] = {
         // use registerForRemoteNotifications
         [[UIApplication sharedApplication] registerForRemoteNotificationTypes:(UIRemoteNotificationTypeNewsstandContentAvailability |UIRemoteNotificationTypeBadge | UIRemoteNotificationTypeSound | UIRemoteNotificationTypeAlert)];
     }
-    
     #ifdef DEBUG
     // For debug only... so that you can download multiple issues per day during development
     [[NSUserDefaults standardUserDefaults] setBool:YES forKey:@"NKDontThrottleNewsstandContentNotifications"];
@@ -155,6 +154,17 @@ NSString * const kBakerEventsType[] = {
     [self.commandDelegate sendPluginResult:pluginResult callbackId:command.callbackId];
 }
 
+- (void)logout: (CDVInvokedUrlCommand *)command
+{
+    CDVPluginResult *pluginResult = nil;
+    
+    [[NSUserDefaults standardUserDefaults] setObject:FALSE forKey:@"UUID"];
+    [[NSUserDefaults standardUserDefaults] synchronize];
+    [BakerAPI generateUUIDOnce];
+    pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK messageAsString:[BakerAPI UUID]];
+    
+    [self.commandDelegate sendPluginResult:pluginResult callbackId:command.callbackId];
+}
 
 
 - (void)restore: (CDVInvokedUrlCommand*)command
@@ -244,6 +254,21 @@ NSString * const kBakerEventsType[] = {
     IssueController *currentBook = [self getIssueControllerById:bookId];
     if (currentBook) {
         [currentBook archive];
+        pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK messageAsString:@"OK"];
+    } else {
+        pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_ERROR messageAsString:@"ERROR"];
+    }
+    
+    [self.commandDelegate sendPluginResult:pluginResult callbackId:command.callbackId];
+}
+
+- (void)silentArchive: (CDVInvokedUrlCommand *)command
+{
+    CDVPluginResult *pluginResult = nil;
+    NSString* bookId = [command.arguments objectAtIndex:0];
+    IssueController *currentBook = [self getIssueControllerById:bookId];
+    if (currentBook) {
+        [currentBook silentArchive];
         pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK messageAsString:@"OK"];
     } else {
         pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_ERROR messageAsString:@"ERROR"];

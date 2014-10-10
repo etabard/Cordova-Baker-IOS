@@ -312,22 +312,28 @@
     [updateAlert release];
 }
 
+- (void) silentArchive
+{
+    [[NSNotificationCenter defaultCenter] postNotificationName:@"BakerIssueArchive" object:self]; // -> Baker Analytics Event
+    
+    NKLibrary *nkLib = [NKLibrary sharedLibrary];
+    NKIssue *nkIssue = [nkLib issueWithName:self.issue.ID];
+    NSString *name = nkIssue.name;
+    NSDate *date = nkIssue.date;
+    
+    [nkLib removeIssue:nkIssue];
+    
+    nkIssue = [nkLib addIssueWithName:name date:date];
+    self.issue.path = [[nkIssue contentURL] path];
+    self.issue.transientStatus = BakerIssueTransientStatusNone;
+    [self refresh];
+
+}
+
 - (void) alertView:(UIAlertView *)alertView clickedButtonAtIndex:(NSInteger)buttonIndex
 {
     if(buttonIndex == 1){
-        [[NSNotificationCenter defaultCenter] postNotificationName:@"BakerIssueArchive" object:self]; // -> Baker Analytics Event
-        
-        NKLibrary *nkLib = [NKLibrary sharedLibrary];
-        NKIssue *nkIssue = [nkLib issueWithName:self.issue.ID];
-        NSString *name = nkIssue.name;
-        NSDate *date = nkIssue.date;
-        
-        [nkLib removeIssue:nkIssue];
-        
-        nkIssue = [nkLib addIssueWithName:name date:date];
-        self.issue.path = [[nkIssue contentURL] path];
-        self.issue.transientStatus = BakerIssueTransientStatusNone;
-        [self refresh];
+        [self silentArchive];
     }
 }
 #endif
