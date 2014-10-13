@@ -19,6 +19,16 @@ NSString * const kBakerEventsType[] = {
     @"BakerSubscriptionsUpdated"
 };
 
+@implementation NSNull (NullAddition)
+
++ (id)nullWhenNil:(id)obj {
+    
+    return (obj ? obj : [self null]);
+    
+}
+
+@end
+
 @implementation Baker
 
 @synthesize notificationMessage;
@@ -343,7 +353,7 @@ NSString * const kBakerEventsType[] = {
         coverPath = nil;
     }
 
-    return [NSDictionary dictionaryWithObjectsAndKeys:issue.ID,@"ID",issue.title,@"title",issue.info,@"info",issue.date,@"date", issue.getStatus, @"status", [issue.url absoluteString], @"url", issue.path, @"path", issue.productID, @"productID", issue.price, @"price",[issue.coverURL absoluteString], @"coverURL", coverPath, @"coverPath", nil];
+     return [NSDictionary dictionaryWithObjectsAndKeys:[NSNull nullWhenNil:issue.ID],@"ID",[NSNull nullWhenNil:issue.title],@"title",[NSNull nullWhenNil:issue.info],@"info",[NSNull nullWhenNil:issue.date],@"date", [NSNull nullWhenNil:issue.getStatus], @"status", [NSNull nullWhenNil:[issue.url absoluteString]], @"url", [NSNull nullWhenNil:issue.path], @"path", [NSNull nullWhenNil:issue.productID], @"productID", [NSNull nullWhenNil:issue.price], @"price",[NSNull nullWhenNil:[issue.coverURL absoluteString]], @"coverURL", [NSNull nullWhenNil:coverPath], @"coverPath", nil];
 }
 
 
