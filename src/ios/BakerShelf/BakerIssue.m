@@ -45,19 +45,27 @@
 @synthesize info;
 @synthesize date;
 @synthesize url;
+@synthesize preview;
 @synthesize path;
+@synthesize previewPath;
 @synthesize bakerBook;
 @synthesize coverPath;
 @synthesize coverURL;
 @synthesize productID;
 @synthesize price;
 @synthesize transientStatus;
+@synthesize transientPreviewStatus;
 
 @synthesize notificationDownloadStartedName;
 @synthesize notificationDownloadProgressingName;
 @synthesize notificationDownloadFinishedName;
 @synthesize notificationDownloadErrorName;
 @synthesize notificationUnzipErrorName;
+
+@synthesize notificationPreviewDownloadStartedName;
+@synthesize notificationPreviewDownloadProgressingName;
+@synthesize notificationPreviewDownloadFinishedName;
+@synthesize notificationPreviewDownloadErrorName;
 
 -(id)initWithBakerBook:(BakerBook *)book {
     self = [super init];
@@ -82,6 +90,7 @@
         }
 
         self.transientStatus = BakerIssueTransientStatusNone;
+        self.transientPreviewStatus = BakerIssueTransientStatusNone;
 
         [self setNotificationDownloadNames];
     }
@@ -94,6 +103,11 @@
     self.notificationDownloadFinishedName = [NSString stringWithFormat:@"notification_download_finished_%@", self.ID];
     self.notificationDownloadErrorName = [NSString stringWithFormat:@"notification_download_error_%@", self.ID];
     self.notificationUnzipErrorName = [NSString stringWithFormat:@"notification_unzip_error_%@", self.ID];
+    
+    self.notificationPreviewDownloadStartedName = [NSString stringWithFormat:@"notification_preview_download_started_%@", self.ID];
+    self.notificationPreviewDownloadProgressingName = [NSString stringWithFormat:@"notification_preview_download_progressing_%@", self.ID];
+    self.notificationPreviewDownloadFinishedName = [NSString stringWithFormat:@"notification_preview_download_finished_%@", self.ID];
+    self.notificationPreviewDownloadErrorName = [NSString stringWithFormat:@"notification_preview_download_error_%@", self.ID];
 }
 
 #ifdef BAKER_NEWSSTAND
@@ -110,7 +124,9 @@
             self.productID = [issueData objectForKey:@"product_id"];
         }
         self.price = nil;
-
+        
+        self.preview = [NSURL URLWithString:[issueData objectForKey:@"preview"]];
+        
         purchasesManager = [PurchasesManager sharedInstance];
 
         NSString *cachePath = [NSSearchPathForDirectoriesInDomains(NSCachesDirectory, NSUserDomainMask, YES) objectAtIndex:0];
@@ -123,10 +139,19 @@
         } else {
             self.path = nil;
         }
+        
+        NKIssue *nkIssuePreview = [nkLib issueWithName:[self.ID stringByAppendingString:@"_preview"]];
+        if (nkIssuePreview) {
+            self.previewPath = [[nkIssuePreview contentURL] path];
+        } else {
+            self.previewPath = nil;
+        }
+
 
         self.bakerBook = nil;
 
         self.transientStatus = BakerIssueTransientStatusNone;
+        self.transientPreviewStatus = BakerIssueTransientStatusNone;
 
         [self setNotificationDownloadNames];
     }
@@ -158,6 +183,24 @@
         [[NSNotificationCenter defaultCenter] postNotificationName:notificationDownloadErrorName object:self userInfo:nil];
     }
 }
+
+- (void)downloadPreview {
+    Reachability* reach = [Reachability reachabilityWithHostname:@"www.google.com"];
+    if ([reach isReachable] && self.preview) {
+        BakerAPI *api = [BakerAPI sharedInstance];
+        NSURLRequest *req = [api requestForURL:self.preview method:@"GET"];
+        
+        NKLibrary *nkLib = [NKLibrary sharedLibrary];
+        NKIssue *nkIssue = [nkLib issueWithName:[self.ID stringByAppendingString:@"_preview"]];
+        NSLog(@"%@", nkIssue);
+        NKAssetDownload *assetDownload = [nkIssue addAssetWithRequest:req];
+        [assetDownload downloadWithDelegate:self];
+        [[NSNotificationCenter defaultCenter] postNotificationName:notificationPreviewDownloadStartedName object:self userInfo:nil];
+    } else {
+        [[NSNotificationCenter defaultCenter] postNotificationName:notificationPreviewDownloadErrorName object:self userInfo:nil];
+    }
+}
+
 - (void)downloadWithAsset:(NKAssetDownload *)asset {
     [asset downloadWithDelegate:self];
     [[NSNotificationCenter defaultCenter] postNotificationName:notificationDownloadStartedName object:self userInfo:nil];
@@ -170,12 +213,22 @@
                               [NSNumber numberWithLongLong:totalBytesWritten], @"totalBytesWritten",
                               [NSNumber numberWithLongLong:expectedTotalBytes], @"expectedTotalBytes",
                               nil];
-    [[NSNotificationCenter defaultCenter] postNotificationName:notificationDownloadProgressingName object:self userInfo:userInfo];
+    NSString *issueID = connection.newsstandAssetDownload.issue.name;
+    if ([issueID isEqualToString:self.ID]) {
+        [[NSNotificationCenter defaultCenter] postNotificationName:notificationDownloadProgressingName object:self userInfo:userInfo];
+    } else {
+        [[NSNotificationCenter defaultCenter] postNotificationName:notificationPreviewDownloadProgressingName object:self userInfo:userInfo];
+    }
 }
 
 - (void)connectionDidFinishDownloading:(NSURLConnection *)connection destinationURL:(NSURL *)destinationURL {
     #ifdef BAKER_NEWSSTAND
-    [self unpackAssetDownload:connection.newsstandAssetDownload toURL:destinationURL];
+    NSString *issueID = connection.newsstandAssetDownload.issue.name;
+    if ([issueID isEqualToString:self.ID]) {
+        [self unpackAssetDownload:connection.newsstandAssetDownload toURL:destinationURL];
+    } else {
+        [self previewAssetDownload:connection.newsstandAssetDownload toURL:destinationURL];
+    }
     #endif
 }
 
@@ -185,6 +238,8 @@
     UIApplication *application = [UIApplication sharedApplication];
     NKIssue *nkIssue = newsstandAssetDownload.issue;
     NSString *destinationPath = [[nkIssue contentURL] path];
+    
+    NSLog(@"Finished downloading : %@", destinationPath);
 
     __block UIBackgroundTaskIdentifier backgroundTask = [application beginBackgroundTaskWithExpirationHandler:^{
         [application endBackgroundTask:backgroundTask];
@@ -222,6 +277,40 @@
         backgroundTask = UIBackgroundTaskInvalid;
     });
 }
+
+- (void)previewAssetDownload:(NKAssetDownload *)newsstandAssetDownload toURL:(NSURL *)destinationURL {
+    
+    UIApplication *application = [UIApplication sharedApplication];
+    NKIssue *nkIssue = newsstandAssetDownload.issue;
+    NSString *destinationPath = [[nkIssue contentURL] path];
+    destinationPath = [destinationPath stringByAppendingString:@"/preview.pdf"];
+    NSLog(@"Finished downloading : %@", [destinationURL path]);
+
+    
+    __block UIBackgroundTaskIdentifier backgroundTask = [application beginBackgroundTaskWithExpirationHandler:^{
+        [application endBackgroundTask:backgroundTask];
+        backgroundTask = UIBackgroundTaskInvalid;
+    }];
+    
+    dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^{
+        NSLog(@"[BakerShelf] Newsstand - Move preview %@ to %@", [destinationURL path], destinationPath);
+        
+        NSFileManager *fileMgr = [NSFileManager defaultManager];
+        NSError *error;
+        if ([fileMgr moveItemAtPath:[destinationURL path] toPath:destinationPath error:&error] != YES){
+            NSLog(@"[BakerShelf] Newsstand - Unable to move file: %@", [error localizedDescription]);
+        }
+        
+        // Notification and UI update have to be handled on the main thread
+        dispatch_async(dispatch_get_main_queue(), ^(void) {
+           [[NSNotificationCenter defaultCenter] postNotificationName:notificationPreviewDownloadFinishedName object:self userInfo:nil];
+        });
+        
+        [application endBackgroundTask:backgroundTask];
+        backgroundTask = UIBackgroundTaskInvalid;
+    });
+}
+
 - (void)updateNewsstandIcon {
     [[UIApplication sharedApplication] setApplicationIconBadgeNumber:1];
 
@@ -302,13 +391,37 @@
 #endif
 }
 
+-(NSString *)getPreviewStatus {
+#ifdef BAKER_NEWSSTAND
+    if (!self.preview) {
+        return @"none";
+    }
+    switch (self.transientStatus) {
+        case BakerIssueTransientStatusDownloading:
+            return @"downloading";
+            break;
+        default:
+            break;
+    }
+    
+    NKLibrary *nkLib = [NKLibrary sharedLibrary];
+    NKIssue *nkIssuePreview = [nkLib issueWithName:[self.ID stringByAppendingString:@"_preview"]];
+    NSString *nkIssuePreviewStatus = [self nkIssueContentStatusToString:[nkIssuePreview status]];
+    return nkIssuePreviewStatus;
+#else
+    return @"bundled";
+#endif
+}
+
 -(void)dealloc {
     [ID release];
     [title release];
     [info release];
     [date release];
     [url release];
+    [preview release];
     [path release];
+    [previewPath release];
     [bakerBook release];
     [coverPath release];
     [coverURL release];

@@ -11,7 +11,9 @@ NSString * const kBakerEventsType[] = {
     @"BakerIssueDeleted",
     @"BakerIssueAdded",
     @"BakerIssueStateChanged",
+    @"BakerIssuePreviewStateChanged",
     @"BakerIssueDownloadProgress",
+    @"BakerIssuePreviewDownloadProgress",
     @"BakerIssueCoverReady",
     @"BakerRefreshStateChanged",
     @"BakerProcessingStateChanged",
@@ -75,7 +77,7 @@ NSString * const kBakerEventsType[] = {
     static NSArray *events;
     static dispatch_once_t onceToken;
     dispatch_once(&onceToken, ^{
-        events = [NSArray arrayWithObjects:kBakerEventsType count:10];
+        events = [NSArray arrayWithObjects:kBakerEventsType count:12];
     });
     
     return events;
@@ -104,7 +106,11 @@ NSString * const kBakerEventsType[] = {
         result = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK messageAsDictionary:[NSDictionary dictionaryWithObjectsAndKeys:[notification name],@"eventType", [notification object], @"data", nil]];
     } else if ([[notification name] isEqualToString:@"BakerIssueStateChanged"]) {
         result = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK messageAsDictionary:[NSDictionary dictionaryWithObjectsAndKeys:[notification name],@"eventType", [notification object], @"data", nil]];
+    } else if ([[notification name] isEqualToString:@"BakerIssuePreviewStateChanged"]) {
+        result = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK messageAsDictionary:[NSDictionary dictionaryWithObjectsAndKeys:[notification name],@"eventType", [notification object], @"data", nil]];
     } else if ([[notification name] isEqualToString:@"BakerIssueDownloadProgress"]) {
+        result = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK messageAsDictionary:[NSDictionary dictionaryWithObjectsAndKeys:[notification name],@"eventType", [notification object], @"data", nil]];
+    } else if ([[notification name] isEqualToString:@"BakerIssuePreviewDownloadProgress"]) {
         result = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK messageAsDictionary:[NSDictionary dictionaryWithObjectsAndKeys:[notification name],@"eventType", [notification object], @"data", nil]];
     } else if ([[notification name] isEqualToString:@"BakerIssueCoverReady"]) {
         result = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK messageAsDictionary:[NSDictionary dictionaryWithObjectsAndKeys:[notification name],@"eventType", [notification object], @"data", nil]];
@@ -241,6 +247,21 @@ NSString * const kBakerEventsType[] = {
     [self.commandDelegate sendPluginResult:pluginResult callbackId:command.callbackId];
 }
 
+- (void)downloadPreview: (CDVInvokedUrlCommand *)command
+{
+    CDVPluginResult *pluginResult = nil;
+    NSString* bookId = [command.arguments objectAtIndex:0];
+    IssueController *currentBook = [self getIssueControllerById:bookId];
+    if (currentBook) {
+        [currentBook downloadPreview];
+        pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK messageAsString:@"OK"];
+    } else {
+        pluginResult= [CDVPluginResult resultWithStatus:CDVCommandStatus_ERROR messageAsString:@"ERROR"];
+    }
+    
+    [self.commandDelegate sendPluginResult:pluginResult callbackId:command.callbackId];
+}
+
 - (void)cancelDownload: (CDVInvokedUrlCommand *)command
 {
     CDVPluginResult *pluginResult = nil;
@@ -295,7 +316,6 @@ NSString * const kBakerEventsType[] = {
     IssueController *currentBook = [self getIssueControllerById:bookId];
     if (currentBook) {
         NSDictionary *bookDatas = [self getBookJson:currentBook.issue];
-
         if (bookDatas) {
             pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK messageAsDictionary:bookDatas];
         } else {
@@ -353,7 +373,7 @@ NSString * const kBakerEventsType[] = {
         coverPath = nil;
     }
 
-     return [NSDictionary dictionaryWithObjectsAndKeys:[NSNull nullWhenNil:issue.ID],@"ID",[NSNull nullWhenNil:issue.title],@"title",[NSNull nullWhenNil:issue.info],@"info",[NSNull nullWhenNil:issue.date],@"date", [NSNull nullWhenNil:issue.getStatus], @"status", [NSNull nullWhenNil:[issue.url absoluteString]], @"url", [NSNull nullWhenNil:issue.path], @"path", [NSNull nullWhenNil:issue.productID], @"productID", [NSNull nullWhenNil:issue.price], @"price",[NSNull nullWhenNil:[issue.coverURL absoluteString]], @"coverURL", [NSNull nullWhenNil:coverPath], @"coverPath", nil];
+     return [NSDictionary dictionaryWithObjectsAndKeys:[NSNull nullWhenNil:issue.ID],@"ID",[NSNull nullWhenNil:issue.title],@"title",[NSNull nullWhenNil:issue.info],@"info",[NSNull nullWhenNil:issue.date],@"date", [NSNull nullWhenNil:issue.getStatus], @"status",  [NSNull nullWhenNil:issue.getPreviewStatus], @"previewStatus", [NSNull nullWhenNil:[issue.url absoluteString]], @"url", [NSNull nullWhenNil:issue.path], @"path", [NSNull nullWhenNil:issue.previewPath], @"previewPath", [NSNull nullWhenNil:issue.productID], @"productID", [NSNull nullWhenNil:issue.price], @"price",[NSNull nullWhenNil:[issue.coverURL absoluteString]], @"coverURL", [NSNull nullWhenNil:coverPath], @"coverPath", nil];
 }
 
 

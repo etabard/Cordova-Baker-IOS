@@ -44,6 +44,7 @@
         } else if (BakerInstance.ready && e.data.issue && !book && e.eventType != 'BakerIssueAdded') {
             return;
         }
+
         switch(e.eventType) {
             case 'BakerRefreshStateChanged':
                 if (!BakerInstance.ready && e.data.state === false) {
@@ -65,6 +66,17 @@
 
                     if (book.status != 'downloading') {
                         book.downloading = false;
+                    }
+                }
+            break;
+            case 'BakerIssuePreviewStateChanged':
+                if (BakerInstance.ready) {
+                    if (!bookChanged) {
+                        fireEvent = false;
+                    }
+
+                    if (book.previewStatus != 'downloading') {
+                        book.previewDownloading = false;
                     }
                 }
             break;
@@ -112,6 +124,21 @@
                         fireEvent = false;
                     }
                     book.downloading = {
+                        progress: progress,
+                        total: e.data.total,
+                        written: e.data.written
+                    };
+                }
+            break;
+
+            case 'BakerIssuePreviewDownloadProgress':
+                if (BakerInstance.ready) {
+                    var progress = Math.round(e.data.progress * 100);
+
+                    if (book.previewDownloading && book.previewDownloading.progress == progress) {
+                        fireEvent = false;
+                    }
+                    book.previewDownloading = {
                         progress: progress,
                         total: e.data.total,
                         written: e.data.written
@@ -300,6 +327,10 @@
         exec('download', [BookId], function() {}, function() {});
     };
 
+    Baker.prototype.downloadPreview = function(BookId) {
+        exec('downloadPreview', [BookId], function() {}, function() {});
+    };
+
     Baker.prototype.cancelDownload = function(BookId) {
         exec('cancelDownload', [BookId], function() {}, function() {});
     };
@@ -348,6 +379,7 @@
 
     var BakerIssue = (function (values) {
         this.downloading = false;
+        this.previewDownloading = false;
         this.coverReady = false;
 
         if (values) {
@@ -379,6 +411,10 @@
 
     BakerIssue.prototype.download = function () {
         BakerInstance.download(this.ID);
+    };
+
+    BakerIssue.prototype.downloadPreview = function () {
+        BakerInstance.downloadPreview(this.ID);
     };
 
     BakerIssue.prototype.cancelDownload = function () {

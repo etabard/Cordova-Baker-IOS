@@ -59,6 +59,7 @@
 @synthesize infoLabel;
 
 @synthesize currentStatus;
+@synthesize currentPreviewStatus;
 
 #pragma mark - Init
 
@@ -68,6 +69,7 @@
     if (self) {
         self.issue = bakerIssue;
         self.currentStatus = nil;
+        self.currentPreviewStatus = nil;
         
         purchaseDelayed = NO;
         
@@ -80,6 +82,11 @@
         [self addIssueObserver:@selector(handleDownloadFinished:) name:self.issue.notificationDownloadFinishedName];
         [self addIssueObserver:@selector(handleDownloadError:) name:self.issue.notificationDownloadErrorName];
         [self addIssueObserver:@selector(handleUnzipError:) name:self.issue.notificationUnzipErrorName];
+        
+        [self addIssueObserver:@selector(handlePreviewDownloadStarted:) name:self.issue.notificationPreviewDownloadStartedName];
+        [self addIssueObserver:@selector(handlePreviewDownloadProgressing:) name:self.issue.notificationPreviewDownloadProgressingName];
+        [self addIssueObserver:@selector(handlePreviewDownloadFinished:) name:self.issue.notificationPreviewDownloadFinishedName];
+        [self addIssueObserver:@selector(handlePreviewDownloadError:) name:self.issue.notificationPreviewDownloadErrorName];
         
         NKLibrary *nkLib = [NKLibrary sharedLibrary];
         for (NKAssetDownload *asset in [nkLib downloadingAssets]) {
@@ -117,6 +124,7 @@
     [titleLabel release];
     [infoLabel release];
     [currentStatus release];
+    [currentPreviewStatus release];
     
     [super dealloc];
 }
@@ -146,6 +154,9 @@
 #ifdef BAKER_NEWSSTAND
 - (void)download {
     [self.issue download];
+}
+- (void)downloadPreview {
+    [self.issue downloadPreview];
 }
 - (void)buy {
     [self addPurchaseObserver:@selector(handleIssuePurchased:) name:@"notification_issue_purchased"];
@@ -285,6 +296,36 @@
     [self refresh];
 }
 
+
+
+- (void)handlePreviewDownloadStarted:(NSNotification *)notification {
+    [self refresh];
+}
+- (void)handlePreviewDownloadProgressing:(NSNotification *)notification {
+    float bytesWritten = [[notification.userInfo objectForKey:@"totalBytesWritten"] floatValue];
+    float bytesExpected = [[notification.userInfo objectForKey:@"expectedTotalBytes"] floatValue];
+    float progress = (bytesWritten / bytesExpected);
+    
+    if ([self.currentPreviewStatus isEqualToString:@"connecting"]) {
+        self.issue.transientPreviewStatus = BakerIssueTransientStatusDownloading;
+        [self refresh];
+    }
+    
+    [[NSNotificationCenter defaultCenter] postNotificationName:@"BakerIssuePreviewDownloadProgress" object:[NSDictionary dictionaryWithObjectsAndKeys:[Baker issueToDictionnary:self.issue], @"issue", [NSNumber numberWithFloat:bytesWritten], @"written", [NSNumber numberWithFloat:bytesExpected], @"total", [NSNumber numberWithFloat:progress], @"progress", nil]];
+}
+- (void)handlePreviewDownloadFinished:(NSNotification *)notification {
+    self.issue.transientPreviewStatus = BakerIssueTransientStatusNone;
+    [self refresh];
+}
+- (void)handlePreviewDownloadError:(NSNotification *)notification {
+    [Utils showAlertWithTitle:[[BakerLocalizedString sharedInstance] NSLocalizedString:@"DOWNLOAD_FAILED_TITLE"]
+                      message:[[BakerLocalizedString sharedInstance] NSLocalizedString:@"DOWNLOAD_FAILED_MESSAGE"]
+                  buttonTitle:[[BakerLocalizedString sharedInstance] NSLocalizedString:@"DOWNLOAD_FAILED_CLOSE"]];
+    
+    self.issue.transientPreviewStatus = BakerIssueTransientStatusNone;
+    [self refresh];
+}
+
 #pragma mark - Newsstand archive management
 
 #ifdef BAKER_NEWSSTAND
@@ -318,14 +359,21 @@
     
     NKLibrary *nkLib = [NKLibrary sharedLibrary];
     NKIssue *nkIssue = [nkLib issueWithName:self.issue.ID];
+    NKIssue *nkIssuePreview = [nkLib issueWithName:[self.issue.ID stringByAppendingString:@"_preview"]];
     NSString *name = nkIssue.name;
     NSDate *date = nkIssue.date;
+    NSString *previewName = nkIssuePreview.name;
+    NSDate *previewDate = nkIssuePreview.date;
     
     [nkLib removeIssue:nkIssue];
+    [nkLib removeIssue:nkIssuePreview];
     
     nkIssue = [nkLib addIssueWithName:name date:date];
+    nkIssuePreview = [nkLib addIssueWithName:previewName date:previewDate];
     self.issue.path = [[nkIssue contentURL] path];
+    self.issue.previewPath = [[nkIssuePreview contentURL] path];
     self.issue.transientStatus = BakerIssueTransientStatusNone;
+    self.issue.transientPreviewStatus = BakerIssueTransientStatusNone;
     [self refresh];
 
 }
@@ -407,9 +455,23 @@
 
 - (void)refresh:(NSString *)status
 {
+    NSString *newPreviousStatus = self.issue.getPreviewStatus;
+    if (![self.currentPreviewStatus isEqualToString:newPreviousStatus]) {
+        BOOL firstState = self.currentPreviewStatus == nil;
+        self.currentPreviewStatus = newPreviousStatus;
+        
+        if (!firstState) {
+            [[NSNotificationCenter defaultCenter] postNotificationName:@"BakerIssuePreviewStateChanged" object:[NSDictionary dictionaryWithObjectsAndKeys:[Baker issueToDictionnary:self.issue],@"issue", nil]];
+            NSLog(@"Preview status changed %@", self.issue.getPreviewStatus);
+        }
+    }
+
+    
     //XXX please improve
     //Need that call to cache covers
     //Call it only the very first time
+    
+    
     if (currentStatus == nil) {
         [self.issue getCoverWithCache:TRUE andBlock:^(UIImage *image) {
             dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^(void) {
@@ -442,7 +504,7 @@
                 destinationPath = [self.issue.coverPath stringByAppendingString:@"-blur.png"];
                 if (![[NSFileManager defaultManager] fileExistsAtPath:destinationPath]) {
                     newImage = [IssueController imageWithImage:image scaledToMaxWidth:250 maxHeight:250];
-                    CIContext *context = [CIContext contextWithOptions:nil];
+                    CIContext *context = [CIContext contextWithOptions:@{kCIContextUseSoftwareRenderer : @(YES)}];
                     CIImage *inputImage = [CIImage imageWithCGImage:newImage.CGImage];
                     
                     // setting up Gaussian Blur (we could use one of many filters offered by Core Image)

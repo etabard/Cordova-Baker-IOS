@@ -61,7 +61,9 @@ typedef enum transientStates {
 @property (copy, nonatomic) NSString *info;
 @property (copy, nonatomic) NSString *date;
 @property (copy, nonatomic) NSURL *url;
+@property (copy, nonatomic) NSURL *preview;
 @property (copy, nonatomic) NSString *path;
+@property (copy, nonatomic) NSString *previewPath;
 
 @property (copy, nonatomic) NSString *coverPath;
 @property (copy, nonatomic) NSURL *coverURL;
@@ -72,6 +74,7 @@ typedef enum transientStates {
 @property (retain, nonatomic) BakerBook *bakerBook;
 
 @property (assign, nonatomic) BakerIssueTransientStatus transientStatus;
+@property (assign, nonatomic) BakerIssueTransientStatus transientPreviewStatus;
 
 @property (copy, nonatomic) NSString *notificationDownloadStartedName;
 @property (copy, nonatomic) NSString *notificationDownloadProgressingName;
@@ -79,13 +82,20 @@ typedef enum transientStates {
 @property (copy, nonatomic) NSString *notificationDownloadErrorName;
 @property (copy, nonatomic) NSString *notificationUnzipErrorName;
 
+@property (copy, nonatomic) NSString *notificationPreviewDownloadStartedName;
+@property (copy, nonatomic) NSString *notificationPreviewDownloadProgressingName;
+@property (copy, nonatomic) NSString *notificationPreviewDownloadFinishedName;
+@property (copy, nonatomic) NSString *notificationPreviewDownloadErrorName;
+
 -(id)initWithBakerBook:(BakerBook *)bakerBook;
 -(void)getCoverWithCache:(bool)cache andBlock:(void(^)(UIImage *img))completionBlock;
 -(NSString *)getStatus;
+-(NSString *)getPreviewStatus;
 
 #ifdef BAKER_NEWSSTAND
 -(id)initWithIssueData:(NSDictionary *)issueData;
 -(void)download;
+-(void)downloadPreview;
 -(void)downloadWithAsset:(NKAssetDownload *)asset;
 #endif
 

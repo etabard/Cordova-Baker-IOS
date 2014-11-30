@@ -57,6 +57,7 @@
 @property (strong, nonatomic) UILabel *infoLabel;
 
 @property (copy, nonatomic) NSString *currentStatus;
+@property (copy, nonatomic) NSString *currentPreviewStatus;
 
 #pragma mark - Structs
 typedef struct {
@@ -79,6 +80,7 @@ typedef struct {
 - (void)actionButtonPressed:(UIButton *)sender;
 #ifdef BAKER_NEWSSTAND
 - (void)download;
+- (void)downloadPreview;
 - (void)cancel;
 - (void)setPrice:(NSString *)price;
 - (void)buy;
