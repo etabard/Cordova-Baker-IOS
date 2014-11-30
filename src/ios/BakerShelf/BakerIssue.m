@@ -283,7 +283,9 @@
     UIApplication *application = [UIApplication sharedApplication];
     NKIssue *nkIssue = newsstandAssetDownload.issue;
     NSString *destinationPath = [[nkIssue contentURL] path];
-    destinationPath = [destinationPath stringByAppendingString:@"/preview.pdf"];
+    destinationPath = [destinationPath stringByAppendingString:@"/"];
+    destinationPath = [destinationPath stringByAppendingString:self.ID];
+    destinationPath = [destinationPath stringByAppendingString:@"_preview.pdf"];
     NSLog(@"Finished downloading : %@", [destinationURL path]);
 
     
