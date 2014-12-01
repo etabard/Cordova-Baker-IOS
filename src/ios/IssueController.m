@@ -509,7 +509,7 @@
                     #if TARGET_IPHONE_SIMULATOR
                         context = [CIContext contextWithOptions:nil];
                     #else
-                        context = [CIContext contextWithOptions:@{kCIContextUseSoftwareRenderer : @(YES}];
+                        context = [CIContext contextWithOptions:@{kCIContextUseSoftwareRenderer : @(YES)}];
                     #endif
                     
                     CIImage *inputImage = [CIImage imageWithCGImage:newImage.CGImage];
