@@ -398,7 +398,7 @@
     if (!self.preview) {
         return @"none";
     }
-    switch (self.transientStatus) {
+    switch (self.transientPreviewStatus) {
         case BakerIssueTransientStatusDownloading:
             return @"downloading";
             break;
