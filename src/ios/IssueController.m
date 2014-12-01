@@ -504,7 +504,14 @@
                 destinationPath = [self.issue.coverPath stringByAppendingString:@"-blur.png"];
                 if (![[NSFileManager defaultManager] fileExistsAtPath:destinationPath]) {
                     newImage = [IssueController imageWithImage:image scaledToMaxWidth:250 maxHeight:250];
-                    CIContext *context = [CIContext contextWithOptions:@{kCIContextUseSoftwareRenderer : @(YES)}];
+                    CIContext *context;
+                    
+                    #if TARGET_IPHONE_SIMULATOR
+                        context = [CIContext contextWithOptions:nil];
+                    #else
+                        context = [CIContext contextWithOptions:@{kCIContextUseSoftwareRenderer : @(YES}];
+                    #endif
+                    
                     CIImage *inputImage = [CIImage imageWithCGImage:newImage.CGImage];
                     
                     // setting up Gaussian Blur (we could use one of many filters offered by Core Image)
