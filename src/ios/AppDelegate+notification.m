@@ -8,7 +8,7 @@ static char launchNotificationKey;
 
 - (id) getCommandInstance:(NSString*)className
 {
-	return [self.viewController getCommandInstance:className];
+    return [self.viewController getCommandInstance:className];
 }
 
 // its dangerous to override a method from within a category.
@@ -24,29 +24,30 @@ static char launchNotificationKey;
 
 - (AppDelegate *)swizzled_init
 {
-	[[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(createNotificationChecker:)
+    [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(createNotificationChecker:)
                name:@"UIApplicationDidFinishLaunchingNotification" object:nil];
-	
-	// This actually calls the original init method over in AppDelegate. Equivilent to calling super
-	// on an overrided method, this is not recursive, although it appears that way. neat huh?
-	return [self swizzled_init];
+    
+    // This actually calls the original init method over in AppDelegate. Equivilent to calling super
+    // on an overrided method, this is not recursive, although it appears that way. neat huh?
+    return [self swizzled_init];
 }
 
 // This code will be called immediately after application:didFinishLaunchingWithOptions:. We need
 // to process notifications in cold-start situations
 - (void)createNotificationChecker:(NSNotification *)notification
 {
-	if (notification)
-	{
-		NSDictionary *launchOptions = [notification userInfo];
-		Baker *pushHandler = [self getCommandInstance:@"Baker"];
+    if (notification)
+    {
+        NSDictionary *launchOptions = [notification userInfo];
+        Baker *pushHandler = [self getCommandInstance:@"Baker"];
     [pushHandler createNotificationChecker:notification];
     
-		if (launchOptions)
-			self.launchNotification = [launchOptions objectForKey: @"UIApplicationLaunchOptionsRemoteNotificationKey"];
-	}
+        if (launchOptions)
+            self.launchNotification = [launchOptions objectForKey: @"UIApplicationLaunchOptionsRemoteNotificationKey"];
+    }
+}
 
-- (void)application:(UIApplication*)application didRegisterUserNotificationSettings:(UIUserNotificationSettings*)notificationSettings {
+- (void)application:(UIApplication *)application didRegisterUserNotificationSettings:(UIUserNotificationSettings*)notificationSettings {
     [application registerForRemoteNotifications];
 }
 
@@ -108,7 +109,7 @@ static char launchNotificationKey;
 
     if (self.launchNotification) {
         pushHandler = [self getCommandInstance:@"Baker"];
-		    pushHandler.notificationMessage = self.launchNotification;
+            pushHandler.notificationMessage = self.launchNotification;
         self.launchNotification = nil;
         [pushHandler performSelectorOnMainThread:@selector(didReceiveRemoteNotification) withObject:pushHandler waitUntilDone:NO];
     }
@@ -143,8 +144,8 @@ static char launchNotificationKey;
 
 - (void)dealloc
 {
-		[super dealloc];
-    self.launchNotification	= nil; // clear the association and release the object
+        [super dealloc];
+    self.launchNotification = nil; // clear the association and release the object
 }
 
 @end
