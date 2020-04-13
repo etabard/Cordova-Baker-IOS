@@ -1,3 +1,5 @@
+# No longer maintained
+
 Phonegap-Baker-IOS
 ==================
 
